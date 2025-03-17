@@ -1,1 +1,1 @@
-from boards.chessboard import MaterialCounter
+from boards.chessboard import FoggedBoard, FullState, MaterialCounter
