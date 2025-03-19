@@ -14,6 +14,9 @@ The sample `interface/index.html` will then work as intended when the button is 
 
 ## Navigating the File Structure
 
+The `api` folder contains implementations of high-level functions the application will carry out,
+that should be directly (or almost directly) exposed to the user for usage.
+
 The `architectures` folder contains the definition of the PyTorch modules
 that will be used to implement the backend AI engine of **EidolonZero**,
 as well as the tree searching mechanism and the custom loss functions.
