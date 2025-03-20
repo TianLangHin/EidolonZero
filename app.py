@@ -2,6 +2,7 @@ from flask import Flask, after_this_request, jsonify, request
 from flask_cors import CORS
 
 import api
+import boards
 
 app = Flask(__name__)
 CORS(app)
