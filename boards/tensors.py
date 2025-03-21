@@ -37,6 +37,11 @@ UNDERPROMOTION_DIRECTION_MAP = {
     Direction.NE: 1,
 }
 
+# Turns the corresponding square index for White to Black and vice versa.
+def flip_square(square: int) -> int:
+    square_rank, square_file = square >> 3, square & 7
+    return 8 * (7 - square_rank) + square_file
+
 # Converts the movement from one square to another
 # (each encoded as an integer from 0 to 63)
 # to an enum that shows which direction that movement is in,
@@ -89,7 +94,7 @@ def direction_and_magnitude(origin: int, destination: int) -> Optional[Tuple[Dir
 # The output dimension of this `torch.Tensor` will be 8 x 8 x 73,
 # as per the move distribution representation used by the AlphaZero team.
 # This function assumes all moves given to it are valid.
-def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None]) -> torch.Tensor:
+def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None], turn: bool) -> torch.Tensor:
     '''
     The representation of a move distribution will be as used in chess for AlphaZero:
     Marking a `1` in a particular cell [i][j] in the 8x8 plane of a particular stack
@@ -97,7 +102,8 @@ def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None]) -> torch.Ten
     The plane within the stack this appears in represents which kind of movement is made.
 
     In the first 56 stacks, there are 8 groups of 7 planes:
-      * Within each group, the relative index 0 to 6 represents moving 1 to 7 squares.
+      * Within each group, the relative index 0 to 6 represents
+        moving 1 to 7 squares in that direction.
       * Each group represents a particular direction of movement,
         mapping their relative index of 0 to 7 to {N, NE, E, SE, S, SW, W, NW}.
 
@@ -116,6 +122,9 @@ def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None]) -> torch.Ten
         # Relies on the little endian encoding of
         # `Chess.A1 = 0`, `Chess.B1 = 1`, etc. until `Chess.H8 = 63`.
         origin, destination, promote = move.from_square, move.to_square, move.promotion
+        if turn == chess.BLACK:
+            origin = flip_square(origin)
+            destination = flip_square(origin)
         square_index = (origin >> 3, origin & 7)
         match promote:
             case None | chess.QUEEN:
@@ -140,9 +149,6 @@ def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None]) -> torch.Ten
 
     return move_dist
 
-
-
-
-
-
-
+def tensor_to_move_list(move_dist: torch.Tensor, *, position: chess.Board) -> List[chess.Move]:
+    # Need to account for flipped square.
+    pass
