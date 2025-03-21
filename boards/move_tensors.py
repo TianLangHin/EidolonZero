@@ -224,6 +224,8 @@ if __name__ == '__main__':
         'r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1',
         'rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8',
         'r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10',
+        '2kn1b2/4P3/7p/ppPr3P/P3N3/8/8/R3K1NR w KQ - 0 1',
+        'r3k1nr/8/8/p3n3/PPpR3p/7P/4p3/2KN1B2 b kq - 0 1',
     ]
 
     for fen in fens:
