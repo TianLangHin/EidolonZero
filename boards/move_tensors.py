@@ -3,6 +3,8 @@ import torch
 from enum import Enum
 from typing import Generator, Optional, Tuple
 
+from utils import flip_square
+
 Direction = Enum('Direction', [
     ('N', 0),
     ('NE', 1),
@@ -48,13 +50,6 @@ UNDERPROMOTION_DIRECTION_REVERSE_MAP = [Direction.N, Direction.NE, Direction.NW]
 UNDERPROMOTION_DIRECTION_MAP = {
     direction: i for i, direction in enumerate(UNDERPROMOTION_DIRECTION_REVERSE_MAP)
 }
-
-# Turns the corresponding square index for White to Black and vice versa.
-def flip_square(square: int, turn: bool) -> int:
-    if turn == chess.WHITE:
-        return square
-    square_rank, square_file = divmod(square, 8)
-    return 8 * (7 - square_rank) + square_file
 
 # Converts the movement from one square to another
 # (each encoded as an integer from 0 to 63)
