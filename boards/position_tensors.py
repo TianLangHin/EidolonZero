@@ -1,7 +1,7 @@
 import chess
 import torch
 
-from utils import flip_square
+from boards.utils import flip_square
 
 def position_to_tensor(board: chess.Board) -> torch.Tensor:
     position = torch.zeros(torch.Size([20, 8, 8]))

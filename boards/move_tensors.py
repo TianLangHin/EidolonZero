@@ -3,7 +3,7 @@ import torch
 from enum import Enum
 from typing import Generator, Optional, Tuple
 
-from utils import flip_square
+from boards.utils import flip_square
 
 Direction = Enum('Direction', [
     ('N', 0),
