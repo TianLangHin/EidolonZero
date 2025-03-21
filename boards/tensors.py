@@ -14,32 +14,46 @@ Direction = Enum('Direction', [
     ('NW', 7),
 ])
 
-KNIGHT_MOVE_MAP = {
-    15: 0,
-    17: 1,
-    6: 2,
-    10: 3,
-    -6: 4,
-    -10: 5,
-    -15: 6,
-    -17: 7,
+DIRECTION_LOOKUP_MAP = [
+    Direction.N,
+    Direction.NE,
+    Direction.E,
+    Direction.SE,
+    Direction.S,
+    Direction.SW,
+    Direction.W,
+    Direction.NW,
+]
+
+DIRECTION_OFFSET_MAP = {
+    Direction.N: 8,
+    Direction.NE: 9,
+    Direction.E: 1,
+    Direction.SE: -7,
+    Direction.S: -8,
+    Direction.SW: -9,
+    Direction.W: -1,
+    Direction.NW: 7,
 }
 
+KNIGHT_REVERSE_MAP = [15, 17, 6, 10, -6, -10, -15, -17]
+KNIGHT_MOVE_MAP = {offset: i for i, offset in enumerate(KNIGHT_REVERSE_MAP)}
+
+UNDERPROMOTION_PIECE_REVERSE_MAP = [chess.ROOK, chess.BISHOP, chess.KNIGHT]
 UNDERPROMOTION_PIECE_MAP = {
-    chess.ROOK: 0,
-    chess.BISHOP: 1,
-    chess.KNIGHT: 2,
+    piece: i for i, piece in enumerate(UNDERPROMOTION_PIECE_REVERSE_MAP)
 }
 
+UNDERPROMOTION_DIRECTION_REVERSE_MAP = [Direction.N, Direction.NE, Direction.NW]
 UNDERPROMOTION_DIRECTION_MAP = {
-    Direction.NW: 2,
-    Direction.N: 0,
-    Direction.NE: 1,
+    direction: i for i, direction in enumerate(UNDERPROMOTION_DIRECTION_REVERSE_MAP)
 }
 
 # Turns the corresponding square index for White to Black and vice versa.
-def flip_square(square: int) -> int:
-    square_rank, square_file = square >> 3, square & 7
+def flip_square(square: int, turn: bool) -> int:
+    if turn == chess.WHITE:
+        return square
+    square_rank, square_file = divmod(square, 8)
     return 8 * (7 - square_rank) + square_file
 
 # Converts the movement from one square to another
@@ -48,8 +62,8 @@ def flip_square(square: int) -> int:
 # as well as finding the distance travelled in this direction.
 # If it is not one of the eight cardinal directions, `None` is returned.
 def direction_and_magnitude(origin: int, destination: int) -> Optional[Tuple[Direction, int]]:
-    origin_rank, origin_file = origin >> 3, origin & 7
-    destination_rank, destination_file = destination >> 3, destination & 7
+    origin_rank, origin_file = divmod(origin, 8)
+    destination_rank, destination_file = divmod(destination, 8)
     if origin_file == destination_file:
         # If you stay on the same file, the movement is vertical.
         distance = abs(destination_rank - origin_rank)
@@ -121,11 +135,9 @@ def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None], turn: bool) 
     for move in move_gen:
         # Relies on the little endian encoding of
         # `Chess.A1 = 0`, `Chess.B1 = 1`, etc. until `Chess.H8 = 63`.
-        origin, destination, promote = move.from_square, move.to_square, move.promotion
-        if turn == chess.BLACK:
-            origin = flip_square(origin)
-            destination = flip_square(origin)
-        square_index = (origin >> 3, origin & 7)
+        origin, destination, promote = (flip_square(move.from_square, turn),
+            flip_square(move.to_square, turn), move.promotion)
+        square_index = divmod(origin, 8)
         match promote:
             case None | chess.QUEEN:
                 match direction_and_magnitude(origin, destination):
@@ -149,6 +161,75 @@ def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None], turn: bool) 
 
     return move_dist
 
-def tensor_to_move_list(move_dist: torch.Tensor, *, position: chess.Board) -> List[chess.Move]:
-    # Need to account for flipped square.
-    pass
+def tensor_to_move_gen(move_dist: torch.Tensor, *, position: chess.Board) -> Generator[chess.Move, None, None]:
+    turn = position.turn
+    for stack_index in range(56):
+        direction_index, magnitude = divmod(stack_index, 7)
+        magnitude += 1
+        for square in range(64):
+            square_rank, square_file = divmod(square, 8)
+            from_square = flip_square(square, turn)
+            if move_dist[stack_index][square_rank][square_file]:
+                from_square = flip_square(square, turn)
+                direction = DIRECTION_LOOKUP_MAP[direction_index]
+                match direction:
+                    case Direction.N | Direction.NW | Direction.NE:
+                        destination = square + magnitude * DIRECTION_OFFSET_MAP[direction]
+                        to_square = flip_square(destination, turn)
+                        if position.piece_type_at(from_square) == chess.PAWN and (destination >> 3) == 7:
+                            yield chess.Move(from_square, to_square, chess.QUEEN)
+                        else:
+                            yield chess.Move(from_square, to_square)
+                    case _:
+                        to_square = flip_square(square + magnitude * DIRECTION_OFFSET_MAP[direction], turn)
+                        yield chess.Move(from_square, to_square)
+    for knight_index in range(8):
+        movement_offset = KNIGHT_REVERSE_MAP[knight_index]
+        for square in range(64):
+            square_rank, square_file = divmod(square, 8)
+            if move_dist[56 + knight_index][square_rank][square_file]:
+                destination = square + movement_offset
+                yield chess.Move(flip_square(square, turn), flip_square(destination, turn))
+    # Here, we assume that moves with an underpromotion piece marked is a pawn move.
+    for stack_index in range(9):
+        piece_index, direction_index = divmod(stack_index, 3)
+        piece_type = UNDERPROMOTION_PIECE_REVERSE_MAP[piece_index]
+        direction = UNDERPROMOTION_DIRECTION_REVERSE_MAP[direction_index]
+        for square in range(64):
+            square_rank, square_file = divmod(square, 8)
+            if move_dist[64 + stack_index][square_rank][square_file]:
+                from_square = flip_square(square, turn)
+                match direction:
+                    case Direction.N:
+                        to_square = flip_square(square + 8)
+                    case Direction.NW:
+                        to_square = flip_square(square + 7)
+                    case Direction.NE:
+                        to_square = flip_square(square + 9)
+                yield chess.Move(from_square, to_square, piece_type)
+
+if __name__ == '__main__':
+    from chessboard import FoggedBoard
+
+    def back_and_forth_test(fen: str):
+        board = chess.Board()
+        original_move_set = set(FoggedBoard.generate_fow_chess_moves(board))
+        move_tensor = move_gen_to_tensor(FoggedBoard.generate_fow_chess_moves(board), board.turn)
+        move_set = set(tensor_to_move_gen(move_tensor, position=board))
+        print('Test FEN', fen, ':', original_move_set == move_set)
+
+    fens = [
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3',
+        'r1bqk2r/ppppbppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 6 5',
+        'r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4',
+        'r1bqk2r/ppppbppp/2n2n2/1B2p3/4P3/3P1N2/PPP2PPP/RNBQ1RK1 b kq - 0 5',
+        'r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1',
+        '8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1',
+        'r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1',
+        'rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8',
+        'r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10',
+    ]
+
+    for fen in fens:
+        back_and_forth_test(fen)
