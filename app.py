@@ -26,5 +26,10 @@ def test_fow_move_tensor():
     fen = request.args.get('fen')
     return jsonify({'tensor': api.fow_chess_move_tensor(fen)})
 
+@app.route('/test/sanity/position')
+def test_position_tensor_sanity():
+    fen = request.args.get('fen')
+    return jsonify({'result': api.sanity_check_position_tensor(fen)})
+
 if __name__ == '__main__':
     app.run()

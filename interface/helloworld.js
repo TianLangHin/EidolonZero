@@ -40,3 +40,11 @@ async function loadTensor() {
   }
   table.appendChild(gridRow)
 }
+
+async function positionSanity() {
+  const fenString = document.getElementById('fen').value
+  const params = new URLSearchParams({ fen: fenString })
+  const response = await fetch('http://127.0.0.1:5000/test/sanity/position?' + params.toString())
+  const jsonResponse = await response.json()
+  document.getElementById('sanity-position').innerHTML = jsonResponse.result
+}
