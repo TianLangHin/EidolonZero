@@ -105,6 +105,8 @@ def direction_and_magnitude(origin: int, destination: int) -> Optional[Tuple[Dir
 # This function assumes all moves given to it are valid.
 def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None], turn: bool) -> torch.Tensor:
     '''
+    The dimension of the tensor outputted by the function is `torch.Size([73, 8, 8])`.
+
     The representation of a move distribution will be as used in chess for AlphaZero:
     Marking a `1` in a particular cell [i][j] in the 8x8 plane of a particular stack
     represents moving a piece from that square.
@@ -156,37 +158,67 @@ def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None], turn: bool) 
 
     return move_dist
 
+# Takes in a Tensor of size 8 x 8 x 73, and yields each of the moves
+# when decoded from this tensor representation.
+# The order of the move yielding is based purely on where in the stack
+# its respective representation is placed.
 def tensor_to_move_gen(move_dist: torch.Tensor, *, position: chess.Board) -> Generator[chess.Move, None, None]:
     turn = position.turn
     for stack_index in range(56):
+        # The first lot of stacks is 8 groups of 7 stacks, with each group representing a movement direction
+        # and the position within each group of 8 representing the number of squares moved.
         direction_index, magnitude = divmod(stack_index, 7)
+        # The magnitude represented by the 0-th offsetted stack within a group is a movement of one square.
         magnitude += 1
         for square in range(64):
+            # For each square within the 8 x 8 grid,
+            # we use the little endian encoding to match with the convention of the `chess` package.
             square_rank, square_file = divmod(square, 8)
             from_square = flip_square(square, turn)
             if move_dist[stack_index][square_rank][square_file]:
                 from_square = flip_square(square, turn)
+                # The direction of the movement will be encoded as if the current player is White.
+                # We determine the final destination based on this,
+                # and only flip the origin and destination squares based on the player colour
+                # at the very final conversion to a `chess.Move` instance.
                 direction = DIRECTION_LOOKUP_MAP[direction_index]
                 match direction:
+                    # These are the only three movement directions that can cause a promotion move
+                    # since these are the only three ways a pawn can move towards the eighth rank.
                     case Direction.N | Direction.NW | Direction.NE:
                         destination = square + magnitude * DIRECTION_OFFSET_MAP[direction]
                         to_square = flip_square(destination, turn)
+                        # Since only underpromotions are explicitly given different stacks,
+                        # pawn moves to the eighth rank are implicitly encoded here as a queen promotion.
+                        # However, if the moving piece is not a pawn, then no promotion is marked at all.
                         if position.piece_type_at(from_square) == chess.PAWN and (destination >> 3) == 7:
                             yield chess.Move(from_square, to_square, chess.QUEEN)
                         else:
                             yield chess.Move(from_square, to_square)
                     case _:
+                        # If it is any other direction, it cannot be a pawn move.
+                        # (Technically, we have the ability to check this, but this function will
+                        # assume that the move distribution encoded in the tensor is valid,
+                        # to make it as fast as possible.)
                         to_square = flip_square(square + magnitude * DIRECTION_OFFSET_MAP[direction], turn)
                         yield chess.Move(from_square, to_square)
+    # The next 8 stacks encode certain knight movement directions.
     for knight_index in range(8):
         movement_offset = KNIGHT_REVERSE_MAP[knight_index]
         for square in range(64):
             square_rank, square_file = divmod(square, 8)
             if move_dist[56 + knight_index][square_rank][square_file]:
+                # We again do not do validation on whether the given movement offset is possible,
+                # since we assume the tensor representation is valid.
+                # Hence, we can just add the offset and assume
+                # that it will not wrap incorrectly off a side of the board.
                 destination = square + movement_offset
                 yield chess.Move(flip_square(square, turn), flip_square(destination, turn))
     # Here, we assume that moves with an underpromotion piece marked is a pawn move.
     for stack_index in range(9):
+        # The tensor representation here is 3 groups of 3 stacks,
+        # with the stack within a group determining the direction of movement (N, NW, NE)
+        # and the positioning of the group itself determines which piece is being underpromoted to.
         piece_index, direction_index = divmod(stack_index, 3)
         piece_type = UNDERPROMOTION_PIECE_REVERSE_MAP[piece_index]
         direction = UNDERPROMOTION_DIRECTION_REVERSE_MAP[direction_index]
