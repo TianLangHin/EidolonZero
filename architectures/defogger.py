@@ -8,6 +8,7 @@
         - Test the structure first***
         - Find a way to insert data for training/testing,
         - Construct training loop and needed elements    
+        - Padding might not be needed because being in at the edge of the board does mean something
 """
 
 
@@ -63,7 +64,7 @@ class VAE(nn.Module):
         self.fc_logvar = nn.Conv2d(256, latent_dim, kernel_size=2, stride=1)
 
 
-
+        #can have output_padding for the conv layers, the stride must be bigger than it tho 
         #Decode part: Reconstructing the output:
         self.fc_decodeLayer = nn.Sequential(
             nn.ConvTranspose2d(in_channels=latent_dim, out_channels= 256, kernel_size=3, stride=1, padding=1),
