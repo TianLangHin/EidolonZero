@@ -1,4 +1,6 @@
-def ConvNet(torch.nn.Module):
+import torch
+
+class ConvNet(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.res_tower = torch.nn.Sequential(
@@ -26,3 +28,9 @@ def ConvNet(torch.nn.Module):
             torch.nn.Linear(5000, 4672),
             torch.nn.Softmax(dim=1)
         )
+
+    def forward(self, x):
+        res_tower_output = self.res_tower(x)
+        value = self.value_head(res_tower_output).flatten()
+        policy_raw = self.policy_head(res_tower_output)
+        return value, policy_raw
