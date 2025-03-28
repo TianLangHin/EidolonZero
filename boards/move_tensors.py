@@ -1,7 +1,7 @@
 import chess
 import torch
 from enum import Enum
-from typing import Generator, Optional, Tuple
+from typing import Generator, Optional, Tuple, Union
 
 from boards.utils import flip_square
 
@@ -128,8 +128,16 @@ def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None], turn: bool) 
       * Within each group, the relative index 0 to 2 represents moving in {N, NE, NW}.
       * Each group represents a particular underpromotion piece: {Rook, Bishop, Knight}.
     '''
+    return move_policy_to_tensor(((move, 1) for move in move_gen), turn)
+
+# This is the core functionality of turning a move probabiilty distribution
+# (encoded as tuples of moves and values) into a corresponding tensor,
+# placing the corresponding probability values at the positions indicated by the move type.
+def move_policy_to_tensor(
+        move_policy: Generator[Tuple[chess.Move, Union[float, int]], None, None],
+        turn: bool) -> torch.Tensor:
     move_dist = torch.zeros(torch.Size([73, 8, 8]))
-    for move in move_gen:
+    for move, prob in move_policy:
         # Relies on the little endian encoding of
         # `Chess.A1 = 0`, `Chess.B1 = 1`, etc. until `Chess.H8 = 63`.
         origin, destination, promote = (flip_square(move.from_square, turn),
@@ -143,10 +151,10 @@ def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None], turn: bool) 
                         # We assume there are no null moves being made.
                         square_difference = destination - origin
                         plane_index = 56 + KNIGHT_MOVE_MAP[square_difference]
-                        move_dist[(plane_index, *square_index)] = 1
+                        move_dist[(plane_index, *square_index)] = prob
                     case direction, magnitude:
                         plane_index = direction.value * 7 + magnitude - 1
-                        move_dist[(plane_index, *square_index)] = 1
+                        move_dist[(plane_index, *square_index)] = prob
             case chess.ROOK | chess.BISHOP | chess.KNIGHT:
                 piece_index = UNDERPROMOTION_PIECE_MAP[promote]
                 direction, _ = direction_and_magnitude(origin, destination)
@@ -154,8 +162,7 @@ def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None], turn: bool) 
                 # if it is not a valid pawn promotion move.
                 direction_index = UNDERPROMOTION_DIRECTION_MAP[direction]
                 plane_index = 64 + 3 * piece_index + direction_index
-                move_dist[(plane_index, *square_index)] = 1
-
+                move_dist[(plane_index, *square_index)] = prob
     return move_dist
 
 # Takes in a Tensor of size 8 x 8 x 73, and yields each of the moves
@@ -163,6 +170,15 @@ def move_gen_to_tensor(move_gen: Generator[chess.Move, None, None], turn: bool) 
 # The order of the move yielding is based purely on where in the stack
 # its respective representation is placed.
 def tensor_to_move_gen(move_dist: torch.Tensor, *, position: chess.Board) -> Generator[chess.Move, None, None]:
+    for move, _ in tensor_to_move_policy(move_dist, position):
+        yield move
+
+# This is the core functionality of turning a move probability tensor
+# into its equivalent probability distribution.
+def tensor_to_move_policy(
+        move_dist: torch.Tensor,
+        *,
+        position: chess.Board) -> Generator[Tuple[chess.Move, Union[float, int]], None, None]:
     turn = position.turn
     for stack_index in range(56):
         # The first lot of stacks is 8 groups of 7 stacks, with each group representing a movement direction
@@ -175,7 +191,7 @@ def tensor_to_move_gen(move_dist: torch.Tensor, *, position: chess.Board) -> Gen
             # we use the little endian encoding to match with the convention of the `chess` package.
             square_rank, square_file = divmod(square, 8)
             from_square = flip_square(square, turn)
-            if move_dist[stack_index][square_rank][square_file]:
+            if (prob := move_dist[stack_index][square_rank][square_file]) != 0:
                 from_square = flip_square(square, turn)
                 # The direction of the movement will be encoded as if the current player is White.
                 # We determine the final destination based on this,
@@ -192,28 +208,28 @@ def tensor_to_move_gen(move_dist: torch.Tensor, *, position: chess.Board) -> Gen
                         # pawn moves to the eighth rank are implicitly encoded here as a queen promotion.
                         # However, if the moving piece is not a pawn, then no promotion is marked at all.
                         if position.piece_type_at(from_square) == chess.PAWN and (destination >> 3) == 7:
-                            yield chess.Move(from_square, to_square, chess.QUEEN)
+                            yield (chess.Move(from_square, to_square, chess.QUEEN), prob)
                         else:
-                            yield chess.Move(from_square, to_square)
+                            yield (chess.Move(from_square, to_square), prob)
                     case _:
                         # If it is any other direction, it cannot be a pawn move.
                         # (Technically, we have the ability to check this, but this function will
                         # assume that the move distribution encoded in the tensor is valid,
                         # to make it as fast as possible.)
                         to_square = flip_square(square + magnitude * DIRECTION_OFFSET_MAP[direction], turn)
-                        yield chess.Move(from_square, to_square)
+                        yield (chess.Move(from_square, to_square), prob)
     # The next 8 stacks encode certain knight movement directions.
     for knight_index in range(8):
         movement_offset = KNIGHT_REVERSE_MAP[knight_index]
         for square in range(64):
             square_rank, square_file = divmod(square, 8)
-            if move_dist[56 + knight_index][square_rank][square_file]:
+            if (prob := move_dist[56 + knight_index][square_rank][square_file]) != 0:
                 # We again do not do validation on whether the given movement offset is possible,
                 # since we assume the tensor representation is valid.
                 # Hence, we can just add the offset and assume
                 # that it will not wrap incorrectly off a side of the board.
                 destination = square + movement_offset
-                yield chess.Move(flip_square(square, turn), flip_square(destination, turn))
+                yield (chess.Move(flip_square(square, turn), flip_square(destination, turn)), prob)
     # Here, we assume that moves with an underpromotion piece marked is a pawn move.
     for stack_index in range(9):
         # The tensor representation here is 3 groups of 3 stacks,
@@ -224,7 +240,7 @@ def tensor_to_move_gen(move_dist: torch.Tensor, *, position: chess.Board) -> Gen
         direction = UNDERPROMOTION_DIRECTION_REVERSE_MAP[direction_index]
         for square in range(64):
             square_rank, square_file = divmod(square, 8)
-            if move_dist[64 + stack_index][square_rank][square_file]:
+            if (prob := move_dist[64 + stack_index][square_rank][square_file]) != 0:
                 from_square = flip_square(square, turn)
                 match direction:
                     case Direction.N:
@@ -233,7 +249,7 @@ def tensor_to_move_gen(move_dist: torch.Tensor, *, position: chess.Board) -> Gen
                         to_square = flip_square(square + 7)
                     case Direction.NE:
                         to_square = flip_square(square + 9)
-                yield chess.Move(from_square, to_square, piece_type)
+                yield (chess.Move(from_square, to_square, piece_type), prob)
 
 if __name__ == '__main__':
     from chessboard import FoggedBoard
