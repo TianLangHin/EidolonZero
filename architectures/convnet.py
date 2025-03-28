@@ -1,3 +1,14 @@
+"""
+    Summary of convolutional net architecture:
+        - Take in 8x8x18 input tensor, extract features and return the value and policy.
+        - Value is a single number between -1 and +1 where -1 is a loss and 1 is a win.
+          0 is supposed to be a draw.
+        - Policy is an 8x8x73 (flattened as a 1x4672) tensor. It is left in this flattened form because the loss function
+          will conduct back propagation easier.
+
+    Can test different numbers of filters and more/less layers, just trying to be mindful of training times.
+"""
+
 import torch
 
 class ConvNet(torch.nn.Module):
