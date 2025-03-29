@@ -61,7 +61,7 @@ def p_uct(
             if len(actions) == 0:
                 found_terminal = True
                 break
-            numerator = sum(stats.visit_count for stats in actions.values())
+            numerator = np.sqrt(sum(stats.visit_count for stats in actions.values()))
             best_action = max(actions.items(),
                 key=lambda v: uct_selector(v[1], c_puct, numerator))[0]
             path.append((board, best_action))
