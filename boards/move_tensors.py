@@ -208,16 +208,16 @@ def tensor_to_move_policy(
                         # pawn moves to the eighth rank are implicitly encoded here as a queen promotion.
                         # However, if the moving piece is not a pawn, then no promotion is marked at all.
                         if position.piece_type_at(from_square) == chess.PAWN and (destination >> 3) == 7:
-                            yield (chess.Move(from_square, to_square, chess.QUEEN), prob)
+                            yield (chess.Move(from_square, to_square, chess.QUEEN), prob.item())
                         else:
-                            yield (chess.Move(from_square, to_square), prob)
+                            yield (chess.Move(from_square, to_square), prob.item())
                     case _:
                         # If it is any other direction, it cannot be a pawn move.
                         # (Technically, we have the ability to check this, but this function will
                         # assume that the move distribution encoded in the tensor is valid,
                         # to make it as fast as possible.)
                         to_square = flip_square(square + magnitude * DIRECTION_OFFSET_MAP[direction], turn)
-                        yield (chess.Move(from_square, to_square), prob)
+                        yield (chess.Move(from_square, to_square), prob.item())
     # The next 8 stacks encode certain knight movement directions.
     for knight_index in range(8):
         movement_offset = KNIGHT_REVERSE_MAP[knight_index]
@@ -229,7 +229,7 @@ def tensor_to_move_policy(
                 # Hence, we can just add the offset and assume
                 # that it will not wrap incorrectly off a side of the board.
                 destination = square + movement_offset
-                yield (chess.Move(flip_square(square, turn), flip_square(destination, turn)), prob)
+                yield (chess.Move(flip_square(square, turn), flip_square(destination, turn)), prob.item())
     # Here, we assume that moves with an underpromotion piece marked is a pawn move.
     for stack_index in range(9):
         # The tensor representation here is 3 groups of 3 stacks,
@@ -249,7 +249,7 @@ def tensor_to_move_policy(
                         to_square = flip_square(square + 7)
                     case Direction.NE:
                         to_square = flip_square(square + 9)
-                yield (chess.Move(from_square, to_square, piece_type), prob)
+                yield (chess.Move(from_square, to_square, piece_type), prob.item())
 
 if __name__ == '__main__':
     from chessboard import FoggedBoard
