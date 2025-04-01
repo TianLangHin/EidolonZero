@@ -119,16 +119,3 @@ class VAE(nn.Module):
     
 
 
-#Defining the loss function (currently BCE and KL divergence)
-
-def loss_func(board, inputBoard, mu, logvar):
-    BCE = torch.nn.functional.binary_cross_entropy(board, inputBoard, reduction='sum')
-
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-
-    return BCE + KLD
-
-
-
-
-
