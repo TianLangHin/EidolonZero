@@ -60,8 +60,8 @@ class VAE(nn.Module):
             nn.Conv2d(in_channels=128, out_channels= 256, kernel_size=3, stride=1, padding=1),
             nn.ReLU()
         )
-        self.fc_mu = nn.Conv2d(256, latent_dim, kernel_size=2, stride=1)
-        self.fc_logvar = nn.Conv2d(256, latent_dim, kernel_size=2, stride=1)
+        self.fc_mu = nn.Conv2d(256, latent_dim, kernel_size=3, stride=1, padding=1)
+        self.fc_logvar = nn.Conv2d(256, latent_dim, kernel_size=3, stride=1, padding=1)
 
 
         #can have output_padding for the conv layers, the stride must be bigger than it tho 
