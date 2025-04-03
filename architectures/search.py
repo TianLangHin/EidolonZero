@@ -18,7 +18,7 @@ class Stats:
     mean_action_value: float
     prior_probability: float
 
-PuctConfig = namedtuple('PuctConfig', ['c_puct', 'dirichlet_alpha', 'epsilon'])
+PuctConfig = namedtuple('PuctConfig', ['c_puct', 'dirichlet_alpha', 'epsilon', 'move_limit'])
 
 GameOutcome = enum.Enum('GameOutcome', ['WHITE', 'BLACK', 'DRAW'])
 
@@ -46,7 +46,7 @@ def p_uct(
     predictor: Callable[[torch.Tensor], Tuple[torch.Tensor, torch.Tensor]],
     config: PuctConfig) -> dict[Action, Stats]:
 
-    c_puct, dirichlet_alpha, epsilon = config
+    c_puct, dirichlet_alpha, epsilon, move_limit = config
 
     tree: dict[str, dict[Action, Stats]] = {}
     root = startpos
@@ -58,7 +58,7 @@ def p_uct(
 
         moves_ahead = 0
 
-        while (actions := tree.get(board.fen(), None)) is not None and moves_ahead < 256:
+        while (actions := tree.get(board.fen(), None)) is not None and moves_ahead < move_limit:
             if len(actions) == 0:
                 found_terminal = True
                 break
@@ -69,7 +69,7 @@ def p_uct(
             (board := board.copy()).push(best_action)
             moves_ahead += 1
 
-        if found_terminal or moves_ahead == 256:
+        if found_terminal or moves_ahead == move_limit:
             match (startpos.turn, game_outcome(board)):
                 case (chess.WHITE, GameOutcome.WHITE) | (chess.BLACK, GameOutcome.BLACK):
                     value = 1
