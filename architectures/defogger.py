@@ -32,11 +32,6 @@ import chess
 import torch 
 from torch import nn
 import numpy as np
-import random
-
-np.random.seed(42)
-random.seed(42)
-torch.manual_seed(42)
 
 #Well I am assuming that we are using 8x8x13 for both full/partial state
 """
