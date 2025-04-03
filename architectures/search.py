@@ -41,6 +41,7 @@ def uct_selector(stats: Stats, c_puct: float, numerator: int) -> float:
 
 def p_uct(
     startpos: State,
+    startpos_move_tensor: torch.Tensor,
     num_simulations: int,
     predictor: Callable[[torch.Tensor], Tuple[torch.Tensor, torch.Tensor]],
     config: PuctConfig) -> dict[Action, Stats]:
@@ -50,7 +51,7 @@ def p_uct(
     tree: dict[str, dict[Action, Stats]] = {}
     root = startpos
 
-    for _ in range(num_simulations):
+    for simulation in range(num_simulations):
         board = root
         path = []
         found_terminal = False
@@ -77,11 +78,14 @@ def p_uct(
                 case _:
                     value = 0
         else:
-            value, policy = predictor(position_to_tensor(board))
+            board_tensor = position_to_tensor(board)
+            value, policy = predictor(torch.reshape(board_tensor, (1, *board_tensor.shape)))
             value = value.item()
             policy = policy.reshape(torch.Size([73, 8, 8]))
-            legal_move_tensor = move_gen_to_tensor(
-                FoggedBoard.generate_fow_chess_moves(board), board.turn)
+            legal_move_tensor = (startpos_move_tensor
+                if board == startpos else
+                move_gen_to_tensor(
+                    FoggedBoard.generate_fow_chess_moves(board), board.turn))
             policy *= legal_move_tensor
             policy /= policy.sum()
             # These are actually probability logits
@@ -95,8 +99,7 @@ def p_uct(
             if num == 0:
                 dimension = len(tree[key])
                 noise = {a: p for a, p in zip(
-                    tree[key].keys(), np.random.dirichlet([0.3] * dimension))}
-                epsilon = 0.25
+                    tree[key].keys(), np.random.dirichlet([dirichlet_alpha] * dimension))}
                 p = tree[key][action].prior_probability
                 p = (1 - epsilon) * p + epsilon * noise[action]
                 tree[key][action].prior_probability = p
