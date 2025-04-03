@@ -17,6 +17,6 @@ class DefoggerLossFn(torch.nn.Module):
     def forward(self, true_board, pred_board, mu, logvar):
         # The loss function for the defogger is the sum of the
         # cross-entropy reconstruction loss and the Kullback-Leibler divergence.
-        ce = F.cross_entropy(true_board, pred_board, reduction='sum')
-        kld = -0.5 * torch.sum(1 + logvar - mu.pow(2) - (logvar.exp() + 1e-6))
+        ce = F.cross_entropy(true_board, pred_board, reduction='mean')
+        kld = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         return ce + kld
