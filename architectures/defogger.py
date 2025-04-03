@@ -43,11 +43,9 @@ torch.manual_seed(42)
 VAE class with structure and encode/decode function.
 """
 class VAE(nn.Module):
-    def __init__(self, input_shape, latent_dim):
+    def __init__(self, latent_dim):
         super(VAE, self).__init__()
 
-        #I dont need the input shape at all, just incase we go back to flattening
-        self.input_shape = input_shape
         self.latent_dim = latent_dim
 
         #Encode component: I'm testing with 512 because what else :<
