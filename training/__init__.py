@@ -156,7 +156,6 @@ def training_step(
     convnet_model.train()
     s = time.perf_counter()
     for epoch in range(convnet_epochs):
-        print(f'ConvNet epoch: {epoch + 1}')
         avg_loss = 0
         for data, policy, value in zip(convnet_data, convnet_policy_label, convnet_value_label):
             policy = torch.reshape(policy, torch.Size([1, 4672]))
@@ -167,7 +166,7 @@ def training_step(
             loss.backward()
             opt.step()
             opt.zero_grad()
-        print(f'Average loss: {avg_loss / len(convnet_data)}')
+        print(f'ConvNet epoch {epoch + 1}, average loss: {avg_loss / len(convnet_data)}')
     e = time.perf_counter()
     print(f'ConvNet training time: {e-s} seconds')
     convnet_model.eval()
@@ -178,7 +177,6 @@ def training_step(
     defogger_model.train()
     s = time.perf_counter()
     for epoch in range(vae_epochs):
-        print(f'VAE Epoch: {epoch + 1}')
         avg_loss = 0
         for data, label in zip(defogger_data, defogger_label):
             board, mu, logvar = defogger_model(data)
@@ -187,7 +185,7 @@ def training_step(
             loss.backward()
             opt.step()
             opt.zero_grad()
-        print(f'Average loss: {avg_loss / len(defogger_data)}')
+        print(f'VAE epoch {epoch + 1}, average loss: {avg_loss / len(defogger_data)}')
     e = time.perf_counter()
     print(f'VAE training time: {e-s} seconds')
     defogger_model.eval()
