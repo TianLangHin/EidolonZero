@@ -26,26 +26,21 @@
     Note: Need to test different latent dim (start with either 32 or 64 and slowly increase it)
 """
 
+from boards import MaterialCounter, tensor_to_position
 
+import chess
 import torch 
 from torch import nn
 import numpy as np
-import random
-
-np.random.seed(42)
-random.seed(42)
-torch.manual_seed(42)
 
 #Well I am assuming that we are using 8x8x13 for both full/partial state
 """
 VAE class with structure and encode/decode function.
 """
 class VAE(nn.Module):
-    def __init__(self, input_shape, latent_dim):
+    def __init__(self, latent_dim):
         super(VAE, self).__init__()
 
-        #I dont need the input shape at all, just incase we go back to flattening
-        self.input_shape = input_shape
         self.latent_dim = latent_dim
 
         #Encode component: I'm testing with 512 because what else :<
@@ -78,7 +73,7 @@ class VAE(nn.Module):
             nn.ReLU(),
 
             nn.ConvTranspose2d(in_channels=64, out_channels= 13, kernel_size=3, stride=1, padding=1),
-            nn.Softmax()
+            nn.Softmax(dim=0)
         )
         
 
@@ -102,7 +97,7 @@ class VAE(nn.Module):
         eps = torch.randn_like(std_dev)
 
         #Return the actual latent vector 
-        return mu + eps + std_dev
+        return mu + eps * std_dev
         
 
     def decodeBoard(self, latent_vector):
@@ -118,4 +113,48 @@ class VAE(nn.Module):
         return board, latent_mean, logvar
     
 
+def most_likely_predicted_state(
+    vae_output: torch.Tensor,
+    original_board_tensor: torch.Tensor,
+    material: MaterialCounter) -> chess.Board:
+
+    # We take the original board as a template.
+    # We even preserve P2 piece observations too, since they are definite.
+    board_tensor = original_board_tensor[:,:,:]
+
+    # We extract out the P2 pieces,
+    # and only consider places that are not visible.
+    p2_pieces = vae_output[6:12,:,:] * (1 - original_board_tensor[12])
+
+    # We figure out which turn we have.
+    if (original_board_tensor[13] == 0).all().item():
+        piece_type_list = [
+            material.black_pawns,
+            material.black_knights,
+            material.black_bishops,
+            material.black_rooks,
+            material.black_queens,
+            material.black_kings,
+        ]
+    else:
+        piece_type_list = [
+            material.white_pawns,
+            material.white_knights,
+            material.white_bishops,
+            material.white_rooks,
+            material.white_queens,
+            material.white_kings,
+        ]
+
+    # We start finding the most likely square for king, queen, rook, etc.
+    # Each time we predict the presence of a piece at some square,
+    # that square can no longer be used for predicting other types of pieces.
+    for stack_index, piece_count in enumerate(reversed(piece_type_list)):
+        indices = torch.topk(p2_pieces[stack_index].flatten(), piece_count).indices
+        for i in indices:
+            square_rank, square_file = divmod(i.item(), 8)
+            board_tensor[11 - stack_index, square_rank, square_file] = 1
+            p2_pieces[:, square_rank, square_file] = 0
+
+    return tensor_to_position(board_tensor)
 
