@@ -42,6 +42,10 @@ def stub_getfoggedstate(fen: str) -> Optional[Dict]:
 def stub_inference(fen: str, material: MaterialCounter) -> Optional[Dict]:
     try:
         board = chess.Board(fen)
+        try:
+            move = next(board.generate_legal_moves())
+        except StopIteration:
+            move = chess.Move(chess.E2, chess.E4)
         # Makes some model call here
         files, ranks = 'abcdefgh', '12345678'
         return {
@@ -54,12 +58,12 @@ def stub_inference(fen: str, material: MaterialCounter) -> Optional[Dict]:
                     for sq, (rank_str, file_str) in enumerate(product(ranks, files))
                 }
             },
-            'move': chess.Move(chess.E2, chess.E4).uci()
+            'move': move.uci()
         }
     except ValueError:
         return None
 
-def stub_makemove(fen: str, move: str) -> Optional[str]:
+def stub_makemove(fen: str, move: str) -> Optional[Dict]:
     try:
         board = chess.Board(fen)
         board.push_uci(move)
