@@ -25,15 +25,35 @@ def piece_string(board: chess.Board, square: int) -> Optional[str]:
 def stub_getfoggedstate(fen: str) -> Optional[Dict]:
     try:
         board = chess.Board(fen)
-        fogged = FoggedBoard.derived_from_full_state(board).fogged_board_state
+        fogged_board = FoggedBoard.derived_from_full_state(board)
+        fogged = fogged_board.fogged_board_state
+        hidden_material = fogged_board.hidden_material
         vision = FoggedBoard.get_visible_squares(board,
             list(FoggedBoard.generate_fow_chess_moves(board)))
         files, ranks = 'abcdefgh', '12345678'
+        args_translate = {
+            'white_pawns': 'wp',
+            'black_pawns': 'bp',
+            'white_knights': 'wn',
+            'black_knights': 'bn',
+            'white_bishops': 'wb',
+            'black_bishops': 'bb',
+            'white_rooks': 'wr',
+            'black_rooks': 'br',
+            'white_queens': 'wq',
+            'black_queens': 'bq',
+            'white_kings': 'wk',
+            'black_kings': 'bk'
+        }
         return {
             'fen': fogged.fen(),
             'visible': {
                 file_str + rank_str: (vision >> sq) & 1 != 0
                 for sq, (rank_str, file_str) in enumerate(product(ranks, files))
+            },
+            'material': {
+                args_translate[attr]: getattr(hidden_material, attr)
+                for attr in args_translate.keys()
             }
         }
     except ValueError:
