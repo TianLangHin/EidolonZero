@@ -1,6 +1,7 @@
 import chess
 import torch
 
+from boards.chessboard import FoggedBoard
 from boards.utils import flip_square
 
 PIECE_STACK_INDEX = [
@@ -112,6 +113,22 @@ def tensor_to_position(pos_tensor: torch.Tensor) -> chess.Board:
     # Castling rights must be set via the `set_castling_fen` method.
     board.set_castling_fen(''.join(castling_rights))
     return board
+
+def ss_to_tensor(square_set: chess.SquareSet, turn: bool) -> torch.Tensor:
+    tensor = torch.zeros(torch.Size([8, 8]))
+    for square in range(64):
+        square_rank, square_file = divmod(square, 8)
+        if turn == chess.BLACK:
+            square_rank = 7 - square_rank
+        if ((square_set >> square) & 1) != 0:
+            tensor[square_rank, square_file] = 1
+    return tensor
+
+def fogged_board_to_tensor(fogged_board: FoggedBoard) -> torch.Tensor:
+    tensor = position_to_tensor(fogged_board.fogged_board_state)
+    tensor[12] = ss_to_tensor(
+        fogged_board.visible_squares, fogged_board.fogged_board_state.turn)
+    return tensor
 
 if __name__ == '__main__':
     from chessboard import FoggedBoard

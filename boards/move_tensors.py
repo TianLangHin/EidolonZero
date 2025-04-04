@@ -170,7 +170,7 @@ def move_policy_to_tensor(
 # The order of the move yielding is based purely on where in the stack
 # its respective representation is placed.
 def tensor_to_move_gen(move_dist: torch.Tensor, *, position: chess.Board) -> Generator[chess.Move, None, None]:
-    for move, _ in tensor_to_move_policy(move_dist, position):
+    for move, _ in tensor_to_move_policy(move_dist, position=position):
         yield move
 
 # This is the core functionality of turning a move probability tensor
@@ -244,11 +244,11 @@ def tensor_to_move_policy(
                 from_square = flip_square(square, turn)
                 match direction:
                     case Direction.N:
-                        to_square = flip_square(square + 8)
+                        to_square = flip_square(square + 8, turn)
                     case Direction.NW:
-                        to_square = flip_square(square + 7)
+                        to_square = flip_square(square + 7, turn)
                     case Direction.NE:
-                        to_square = flip_square(square + 9)
+                        to_square = flip_square(square + 9, turn)
                 yield (chess.Move(from_square, to_square, piece_type), prob.item())
 
 if __name__ == '__main__':
