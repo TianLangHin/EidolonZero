@@ -97,7 +97,7 @@ class VAE(nn.Module):
         eps = torch.randn_like(std_dev)
 
         #Return the actual latent vector 
-        return mu + eps + std_dev
+        return mu + eps * std_dev
         
 
     def decodeBoard(self, latent_vector):
