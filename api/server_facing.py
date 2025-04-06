@@ -93,7 +93,7 @@ def stub_inference(fen: str, material: MaterialCounter) -> Optional[Dict]:
 def stub_makemove(fen: str, move: str) -> Optional[Dict]:
     try:
         board = chess.Board(fen)
-        board.push_uci(move)
+        board.push(chess.Move.from_uci(move))
         files, ranks = 'abcdefgh', '12345678'
         return {
             'new_board': {
