@@ -22,18 +22,45 @@ def piece_string(board: chess.Board, square: int) -> Optional[str]:
         case _:
             return None
 
-def stub_getfoggedstate(fen: str) -> Optional[Dict]:
+def stub_getfoggedstate(fen: str, invert: bool) -> Optional[Dict]:
     try:
         board = chess.Board(fen)
-        fogged = FoggedBoard.derived_from_full_state(board).fogged_board_state
+        true_fen = FoggedBoard.derived_from_full_state(board).fogged_board_state.fen()
+        if invert:
+            board.turn = not board.turn
+        fogged_board = FoggedBoard.derived_from_full_state(board)
+        fogged = fogged_board.fogged_board_state
+        hidden_material = fogged_board.hidden_material
         vision = FoggedBoard.get_visible_squares(board,
             list(FoggedBoard.generate_fow_chess_moves(board)))
         files, ranks = 'abcdefgh', '12345678'
+        args_translate = {
+            'white_pawns': 'wp',
+            'black_pawns': 'bp',
+            'white_knights': 'wn',
+            'black_knights': 'bn',
+            'white_bishops': 'wb',
+            'black_bishops': 'bb',
+            'white_rooks': 'wr',
+            'black_rooks': 'br',
+            'white_queens': 'wq',
+            'black_queens': 'bq',
+            'white_kings': 'wk',
+            'black_kings': 'bk'
+        }
         return {
-            'fen': fogged.fen(),
+            'fen': true_fen,
             'visible': {
                 file_str + rank_str: (vision >> sq) & 1 != 0
                 for sq, (rank_str, file_str) in enumerate(product(ranks, files))
+            },
+            'squares': {
+                file_str + rank_str: piece_string(board, sq)
+                for sq, (rank_str, file_str) in enumerate(product(ranks, files))
+            },
+            'material': {
+                args_translate[attr]: getattr(hidden_material, attr)
+                for attr in args_translate.keys()
             }
         }
     except ValueError:
@@ -66,7 +93,7 @@ def stub_inference(fen: str, material: MaterialCounter) -> Optional[Dict]:
 def stub_makemove(fen: str, move: str) -> Optional[Dict]:
     try:
         board = chess.Board(fen)
-        board.push_uci(move)
+        board.push(chess.Move.from_uci(move))
         files, ranks = 'abcdefgh', '12345678'
         return {
             'new_board': {
