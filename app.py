@@ -35,7 +35,8 @@ def test_position_tensor_sanity():
 @app.route('/getfoggedstate/stub')
 def stub_getfoggedstate():
     fen = request.args.get('fen')
-    return jsonify(api.stub_getfoggedstate(fen))
+    invert_move = request.args.get('invert')
+    return jsonify(api.stub_getfoggedstate(fen, invert_move))
 
 @app.route('/inference/stub')
 def stub_inference():

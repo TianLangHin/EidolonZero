@@ -22,9 +22,12 @@ def piece_string(board: chess.Board, square: int) -> Optional[str]:
         case _:
             return None
 
-def stub_getfoggedstate(fen: str) -> Optional[Dict]:
+def stub_getfoggedstate(fen: str, invert: bool) -> Optional[Dict]:
     try:
         board = chess.Board(fen)
+        true_fen = FoggedBoard.derived_from_full_state(board).fogged_board_state.fen()
+        if invert:
+            board.turn = not board.turn
         fogged_board = FoggedBoard.derived_from_full_state(board)
         fogged = fogged_board.fogged_board_state
         hidden_material = fogged_board.hidden_material
@@ -46,9 +49,13 @@ def stub_getfoggedstate(fen: str) -> Optional[Dict]:
             'black_kings': 'bk'
         }
         return {
-            'fen': fogged.fen(),
+            'fen': true_fen,
             'visible': {
                 file_str + rank_str: (vision >> sq) & 1 != 0
+                for sq, (rank_str, file_str) in enumerate(product(ranks, files))
+            },
+            'squares': {
+                file_str + rank_str: piece_string(board, sq)
                 for sq, (rank_str, file_str) in enumerate(product(ranks, files))
             },
             'material': {
