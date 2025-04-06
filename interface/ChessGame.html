@@ -251,6 +251,25 @@
 	  document.getElementById("mySidebar").style.display = "none";
 	}
 
+	//piecemap
+		  const pieceMap = {
+			'X': 'X',
+			'P': '♙',
+			'p': '♟',
+			'B': '♗',
+			'b': '♝',
+			'Q': '♕',
+			'q': '♛',
+			'K': '♔',
+			'k': '♚',
+			'R': '♖',
+			'r': '♜',
+			'N': '♘',
+			'n': '♞'
+		}
+	  // end piecemap
+
+
   async function step1() {
 		const fen = document.getElementById("fen").innerHTML;
 		const move = document.getElementById("move").value;
@@ -272,7 +291,7 @@
     const visible = jsonResponse.visible
     const squares = jsonResponse.squares
     for (let key in squares) {
-      const occupancy = !visible[key] ? "X" : squares[key] === null ? "" : squares[key]
+      const occupancy = !visible[key] ? "X" : squares[key] === null ? "" : pieceMap[squares[key]]
       document.getElementById('main-' + key).innerHTML = occupancy
     }
 
@@ -290,7 +309,7 @@
     for (let key in squares) {
       // Have some map from the letters to the emojis, e.g. `pieceMap`
       // and then use `pieceMap[squares[key]]` instead.
-      document.getElementById(key).innerHTML = squares[key] === null ? "" : squares[key]
+      document.getElementById(key).innerHTML = squares[key] === null ? "" : pieceMap[squares[key]]
     }
 
     return jsonResponse.move
@@ -314,7 +333,7 @@
     const visible = jsonResponse.visible
     const squares = jsonResponse.squares
     for (let key in squares) {
-      const occupancy = !visible[key] ? "X" : squares[key] === null ? "" : squares[key]
+      const occupancy = !visible[key] ? "X" : squares[key] === null ? "" : pieceMap[squares[key]]
       document.getElementById('main-' + key).innerHTML = occupancy
     }
   }
