@@ -34,17 +34,17 @@ def tourney_against_baseline(
             for i in range(games):
                 hist, outcome = against_baseline(
                     baseline, (conv, vae), play_config=play_config, random_as_white=True,
-                    verbose=False)
+                    verbose=True)
                 result = ('1-0' if outcome == 1.0 else '0-1' if outcome == -1.0 else '1/2-1/2')
-                f.writeline(FORMAT.format(f'Random-{seed}', name, result, ' '.join(hist)))
+                f.write(FORMAT.format(f'Random-{seed}', name, result, ' '.join(hist)))
                 f.flush()
 
             for i in range(games):
                 hist, outcome = against_baseline(
                     baseline, (conv, vae), play_config=play_config, random_as_white=False,
-                    verbose=False)
+                    verbose=True)
                 result = ('1-0' if outcome == 1.0 else '0-1' if outcome == -1.0 else '1/2-1/2')
-                f.writeline(FORMAT.format(name, f'Random-{seed}', result, ' '.join(hist)))
+                f.write(FORMAT.format(name, f'Random-{seed}', result, ' '.join(hist)))
                 f.flush()
 
 def loaded_models(variant: str, iteration: int) -> Tuple[ConvNet, VAE]:
@@ -72,6 +72,7 @@ if __name__ == '__main__':
         possibilities=1,
         simulations=200)
     configs = {
+        'initial': initial_play_config,
         'cpuct1.0': PlayConfig(
             **(initial_play_config._asdict() | {
                 'puct_config': PuctConfig(
@@ -102,9 +103,9 @@ if __name__ == '__main__':
         'weightdecay0': initial_play_config
     }
     models_and_config = [
-        (*loaded_models(variant, i), configs[variant], f'{variant}-{i}')
+        (*loaded_models(variant, i), configs[variant], f'EidolonZero-{variant}-{i}')
         for variant in configs
-        for i in range(1, 4)
+        for i in range(3, 4)
     ]
 
-    tourney_against_baseline(models_and_config, 10, 19937, 'game.txt')
+    tourney_against_baseline(models_and_config, 5, 19937, 'game.txt')

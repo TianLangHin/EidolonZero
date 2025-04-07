@@ -66,7 +66,9 @@ def p_uct(
             best_action = max(actions.items(),
                 key=lambda v: uct_selector(v[1], c_puct, numerator))[0]
             path.append((board, best_action))
-            (board := board.copy()).push(best_action)
+            # In the event of a zero tensor being outputted somewhere, we add a fail safe here.
+            chosen_action = best_action if best_action in board.legal_moves else board.legal_moves[0]
+            (board := board.copy()).push(chosen_action)
             moves_ahead += 1
 
         if found_terminal or moves_ahead == move_limit:
