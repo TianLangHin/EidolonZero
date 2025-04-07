@@ -46,8 +46,8 @@ if __name__ == '__main__':
     vae = VAE(512)
 
     # Start off with saving the very first untrained model.
-    torch.save(conv.state_dict(), os.path.join(os.getcwd(), 'models', 'convnet-0.pt'))
-    torch.save(vae.state_dict(), os.path.join(os.getcwd(), 'models', 'vae-0.pt'))
+    # torch.save(conv.state_dict(), os.path.join(os.getcwd(), 'models', 'convnet-0.pt'))
+    # torch.save(vae.state_dict(), os.path.join(os.getcwd(), 'models', 'vae-0.pt'))
 
     # Initial hyperparameter settings.
     initial_training_config = TrainingConfig(
@@ -112,11 +112,11 @@ if __name__ == '__main__':
             initial_convnet_optim,
             initial_defogger_optim)
 
-    # Change `epsilon` to `0.125`.
+    # Change `epsilon` to `0.5`.
     puct_config = PuctConfig(
-        **(initial_puct_config._asdict() | {'epsilon': 0.125}))
+        **(initial_puct_config._asdict() | {'epsilon': 0.5}))
 
-    setting = 'epsilon0.125'
+    setting = 'epsilon0.5'
     for step in range(3):
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
@@ -129,12 +129,12 @@ if __name__ == '__main__':
             initial_defogger_optim)
 
     # Change `weight_decay` to `0`.
-    convnet_optim = PuctConfig(
+    convnet_optim = OptimConfig(
         **(initial_convnet_optim._asdict() | {'weight_decay': 0}))
-    defogger_optim = PuctConfig(
+    defogger_optim = OptimConfig(
         **(initial_defogger_optim._asdict() | {'weight_decay': 0}))
 
-    setting = 'epsilon0.125'
+    setting = 'weightdecay0'
     for step in range(3):
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))

@@ -53,7 +53,7 @@ def training_step(
     defogger_label = []
 
     for game in range(sample_games):
-        print(f'Game {game + 1}')
+        print(f'Game {game + 1}', flush=True)
 
         game_convnet_data = []
         game_convnet_label = []
@@ -65,7 +65,7 @@ def training_step(
         board = chess.Board()
 
         for move_number in range(move_limit):
-            print(f'Move {move_number + 1}')
+            print(f'Move {move_number + 1}', flush=True)
 
             move_tensor = move_gen_to_tensor(FoggedBoard.generate_fow_chess_moves(board), board.turn)
 
@@ -79,21 +79,21 @@ def training_step(
             summed_move_policy = torch.zeros(torch.Size([73, 8, 8]))
 
             for possible_board in range(possibilities):
-                print(f'Possibility {possible_board + 1}')
+                print(f'Possibility {possible_board + 1}', flush=True)
 
                 defogged_state = most_likely_predicted_state(
                     defogger_model(fogged_tensor[:13,:,:])[0],
                     fogged_tensor,
                     fogged_board.hidden_material
                 )
-                print(defogged_state)
-                print('Search start')
+                print(defogged_state, flush=True)
+                print('Search start', flush=True)
 
                 s = time.perf_counter()
                 move_search_stats = p_uct(defogged_state, move_tensor, simulations, convnet_model, puct_config)
                 e = time.perf_counter()
 
-                print(f'Search time: {e-s} seconds')
+                print(f'Search time: {e-s} seconds', flush=True)
 
                 total_visit_count = sum(stats.visit_count for stats in move_search_stats.values())
                 move_policy_generator = (
@@ -114,10 +114,10 @@ def training_step(
                 position=board
             ))
 
-            print(f'Chosen move: {chosen_move}')
+            print(f'Chosen move: {chosen_move}', flush=True)
 
             board.push(chosen_move)
-            print(board)
+            print(board, flush=True)
 
             current_material = MaterialCounter.material_in_board(board)
             if current_material.black_kings == 0:
@@ -133,7 +133,7 @@ def training_step(
                 game_outcome = 0.0
                 break
 
-        print(f'Game outcome: {game_outcome}')
+        print(f'Game outcome: {game_outcome}', flush=True)
 
         if game_outcome == 0.0:
             game_convnet_value = [0.0] * len(game_convnet_data)
@@ -166,9 +166,9 @@ def training_step(
             loss.backward()
             opt.step()
             opt.zero_grad()
-        print(f'ConvNet epoch {epoch + 1}, average loss: {avg_loss / len(convnet_data)}')
+        print(f'ConvNet epoch {epoch + 1}, average loss: {avg_loss / len(convnet_data)}', flush=True)
     e = time.perf_counter()
-    print(f'ConvNet training time: {e-s} seconds')
+    print(f'ConvNet training time: {e-s} seconds', flush=True)
     convnet_model.eval()
 
     defogger_loss_fn = DefoggerLossFn()
@@ -185,9 +185,9 @@ def training_step(
             loss.backward()
             opt.step()
             opt.zero_grad()
-        print(f'VAE epoch {epoch + 1}, average loss: {avg_loss / len(defogger_data)}')
+        print(f'VAE epoch {epoch + 1}, average loss: {avg_loss / len(defogger_data)}', flush=True)
     e = time.perf_counter()
-    print(f'VAE training time: {e-s} seconds')
+    print(f'VAE training time: {e-s} seconds', flush=True)
     defogger_model.eval()
 
     return convnet_model, defogger_model
