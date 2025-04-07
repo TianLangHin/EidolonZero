@@ -67,7 +67,7 @@ def p_uct(
                 key=lambda v: uct_selector(v[1], c_puct, numerator))[0]
             path.append((board, best_action))
             # In the event of a zero tensor being outputted somewhere, we add a failsafe here.
-            chosen_action = best_action if best_action in board.legal_moves else next(iter(board.legal_moves))
+            chosen_action = best_action if best_action in board.pseudo_legal_moves else next(iter(board.pseudo_legal_moves))
             (board := board.copy()).push(chosen_action)
             moves_ahead += 1
 
