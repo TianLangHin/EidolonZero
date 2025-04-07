@@ -39,16 +39,16 @@ def against_baseline(
     while (status := game_status(game_state)) is None:
 
         # In both cases, we need to determine all the legal moves available.
-        legal_moves = FoggedBoard.generate_fow_chess_moves(game_state)
+        legal_move_list = list(FoggedBoard.generate_fow_chess_moves(game_state))
 
         # If it is random baseline turn to play, choose the move.
         if (ply_number % 2 == 1) == random_as_white:
-            move = random_baseline.choose_move(list(legal_moves))
+            move = random_baseline.choose_move(legal_move_list)
             if verbose:
                 print(f'Ply {ply_number}, Baseline: {move.uci()}')
         else:
             # For the bot to work, it needs to know the legal moves available as a tensor.
-            legal_move_tensor = move_gen_to_tensor(legal_moves, game_state.turn)
+            legal_move_tensor = move_gen_to_tensor((move for move in legal_move_list), game_state.turn)
             # We then derive the board for it to play from.
             fogged_board = FoggedBoard.derived_from_full_state(game_state)
             fogged_tensor = fogged_board_to_tensor(fogged_board)
@@ -72,8 +72,10 @@ def against_baseline(
                 total_visit_count = sum(stats.visit_count for stats in search_result.values())
                 move_policy_generator = (
                     (action, stats.visit_count / total_visit_count)
-                    for action, stats in search_result.items())
+                    for action, stats in search_result.items() if action in legal_move_list)
                 move_policy_tensor = move_policy_to_tensor(move_policy_generator, game_state.turn)
+                if move_policy_tensor.sum() == 0:
+                    move_policy_tensor += move_gen_to_tensor((move for move in [legal_move_list[0]]), game_state.turn)
 
                 # Add this to the policy considering all possibilities.
                 summed_move_policy += move_policy_tensor
