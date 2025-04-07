@@ -88,11 +88,15 @@ def p_uct(
                 if board == startpos else
                 move_gen_to_tensor(
                     FoggedBoard.generate_fow_chess_moves(board), board.turn))
-            policy *= legal_move_tensor
-            policy /= policy.sum()
-            # These are actually probability logits
-            policy = tensor_to_move_policy(policy, position=board)
-            tree[board.fen()] = {move: Stats(0, 0., 0., prob) for move, prob in policy}
+            # Second failsafe in case there is a terminal node that also causes numerical instability.
+            if legal_move_tensor.sum() == 0:
+                tree[board.fen()] = {}
+            else:
+                policy *= legal_move_tensor
+                policy /= policy.sum()
+                # These are actually probability logits
+                policy = tensor_to_move_policy(policy, position=board)
+                tree[board.fen()] = {move: Stats(0, 0., 0., prob) for move, prob in policy}
 
         for num, (state, action) in enumerate(path):
             key = state.fen()
