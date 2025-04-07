@@ -84,7 +84,7 @@ if __name__ == '__main__':
     puct_config = PuctConfig(
         **(initial_puct_config._asdict() | {'c_puct': 1.0}))
 
-    setting = 'puct1.0'
+    setting = 'cpuct1.0'
     for step in range(3):
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
