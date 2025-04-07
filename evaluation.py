@@ -72,16 +72,16 @@ if __name__ == '__main__':
         possibilities=1,
         simulations=200)
     configs = {
-        'initial': initial_play_config,
-        'cpuct1.0': PlayConfig(
-            **(initial_play_config._asdict() | {
-                'puct_config': PuctConfig(
-                    **(initial_puct_config._asdict() | {
-                        'c_puct': 1.0
-                    })
-                )
-            })
-        ),
+         'initial': initial_play_config,
+         'cpuct1.0': PlayConfig(
+             **(initial_play_config._asdict() | {
+                 'puct_config': PuctConfig(
+                     **(initial_puct_config._asdict() | {
+                         'c_puct': 1.0
+                     })
+                 )
+             })
+         ),
         'dirichletalpha0.15': PlayConfig(
             **(initial_play_config._asdict() | {
                 'puct_config': PuctConfig(
@@ -109,3 +109,4 @@ if __name__ == '__main__':
     ]
 
     tourney_against_baseline(models_and_config, 5, 19937, 'game.txt')
+    tourney_against_baseline([(*loaded_models('untrained', 0), initial_play_config, 'EidolonZero-untrained')], 5, 19937, 'untrained.txt')
