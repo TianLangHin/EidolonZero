@@ -8,7 +8,7 @@
   </head>
 
 <div class="sidebar" id="mySidebar">
-  <button class="closeButton" onclick="w3_close()">Close &times;</button>
+  <button class="closeButton" onclick="closeSidebar()">Close &times;</button>
   <a>Current Fen:</a>
   <p id="fen" style="color: grey; margin: 15px; font-size: 12px;">rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1</p>
   <a>Predicted Board State</a>
@@ -119,7 +119,7 @@
 </div>
 
 <div class="Ban"> 
-  <button class="wbutton" onclick="w3_open()">
+  <button class="wbutton" onclick="openSidebar()">
     <p>Reveal AI</p>
   </button>
 </div>
@@ -242,109 +242,15 @@
 	
 </div>
 
-  <script>
-  function w3_open() {
+<script>
+  function openSidebar() {
     document.getElementById("mySidebar").style.display = "block";
   }
 
-  function w3_close() {
+  function closeSidebar() {
     document.getElementById("mySidebar").style.display = "none";
   }
-
-  //piecemap
-  const pieceMap = {
-    'X': 'X',
-    'P': '♙',
-    'p': '♟',
-    'B': '♗',
-    'b': '♝',
-    'Q': '♕',
-    'q': '♛',
-    'K': '♔',
-    'k': '♚',
-    'R': '♖',
-    'r': '♜',
-    'N': '♘',
-    'n': '♞'
-  }
-  // end piecemap
-
-
-  async function step1() {
-    const fen = document.getElementById("fen").innerHTML;
-    const move = document.getElementById("move").value;
-    const params = new URLSearchParams({ fen: fen, move: move });
-    const response = await fetch("http://127.0.0.1:5000/makemove?" + params.toString());
-    const jsonResponse = await response.json();
-    document.getElementById('fen').innerHTML = jsonResponse.new_board.fen;
-  }
-
-  async function step2() {
-    const fen = document.getElementById("fen").innerHTML;
-    const params = new URLSearchParams({ fen: fen, invert: true });
-    const response = await fetch("http://127.0.0.1:5000/getfoggedstate?" + params.toString());
-    const jsonResponse = await response.json();
-    let foggedFen = jsonResponse.fen;
-    let materialCount = jsonResponse.material;
-
-    // Update the UI.
-    const visible = jsonResponse.visible
-    const squares = jsonResponse.squares
-    for (let key in squares) {
-      const occupancy = !visible[key] ? "X" : squares[key] === null ? "" : pieceMap[squares[key]]
-      document.getElementById('main-' + key).innerHTML = occupancy
-    }
-
-    return [foggedFen, materialCount]
-  }
-
-  async function step3(foggedFen, materialCount) {
-    const params = new URLSearchParams({ ...materialCount, fen: foggedFen });
-    const response = await fetch("http://127.0.0.1:5000/inference?" + params.toString());
-    const jsonResponse = await response.json();
-
-    document.getElementById('ai-best-move').innerHTML = "Best Move: " + jsonResponse.move
-
-    const squares = jsonResponse.predicted_board.squares
-    for (let key in squares) {
-      // Have some map from the letters to the emojis, e.g. `pieceMap`
-      // and then use `pieceMap[squares[key]]` instead.
-      document.getElementById(key).innerHTML = squares[key] === null ? "" : pieceMap[squares[key]]
-    }
-
-    return jsonResponse.move
-  }
-
-  async function step4(aiMove) {
-    const fen = document.getElementById("fen").innerHTML;
-    const params = new URLSearchParams({ fen: fen, move: aiMove });
-    const response = await fetch("http://127.0.0.1:5000/makemove?" + params.toString());
-    const jsonResponse = await response.json();
-    document.getElementById('fen').innerHTML = jsonResponse.new_board.fen;
-  }
-
-  async function step5() {
-    const fen = document.getElementById("fen").innerHTML;
-    const params = new URLSearchParams({ fen: fen });
-    const response = await fetch("http://127.0.0.1:5000/getfoggedstate?" + params.toString());
-    const jsonResponse = await response.json();
-
-    // Update the UI.
-    const visible = jsonResponse.visible
-    const squares = jsonResponse.squares
-    for (let key in squares) {
-      const occupancy = !visible[key] ? "X" : squares[key] === null ? "" : pieceMap[squares[key]]
-      document.getElementById('main-' + key).innerHTML = occupancy
-    }
-  }
-
-  async function makemove() {
-    await step1()
-    const [foggedFen, materialCount] = await step2()
-    const aiMove = await step3(foggedFen, materialCount)
-    await step4(aiMove)
-    await step5()
-  }
-  </script>
-
+</script>
+<script src="eidolonzero.js">
+</script>
 </html>
