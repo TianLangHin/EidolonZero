@@ -6,242 +6,242 @@
     <title>EidolonZero</title>
     <link rel="stylesheet" href="ChessGameCSS.css">
   </head>
+<body>
+  <div class="sidebar" id="mySidebar">
+    <button class="closeButton" onclick="closeSidebar()">Close &times;</button>
+    <a>Current Fen:</a>
+    <p id="fen" style="color: grey; margin: 15px; font-size: 12px;">rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1</p>
+    <a>Predicted Board State</a>
+    <table class="chess-board-lil">
+  		<tbody>
+  			<tr>
+  				<th></th>
+  				<th style="color: white">a</th>
+  				<th style="color: white">b</th>
+  				<th style="color: white">c</th>
+  				<th style="color: white">d</th>
+  				<th style="color: white">e</th>
+  				<th style="color: white">f</th>
+  				<th style="color: white">g</th>
+  				<th style="color: white">h</th>
+  			</tr>
+  			<tr>
+  				<th style="color: white">8</th>
+  				<td class="light" id="a8">♜</td>
+  				<td class="dark" id="b8">♞</td>
+  				<td class="light" id="c8">♝</td>
+  				<td class="dark" id="d8">♛</td>
+  				<td class="light" id="e8">♚</td>
+  				<td class="dark" id="f8">♝</td>
+  				<td class="light" id="g8">♞</td>
+  				<td class="dark" id="h8">♜</td>
+  			</tr>
+  			<tr>
+  				<th style="color: white">7</th>
+  				<td class="dark" id="a7">♟</td>
+  				<td class="light" id="b7">♟</td>
+  				<td class="dark" id="c7">♟</td>
+  				<td class="light" id="d7">♟</td>
+  				<td class="dark" id="e7">♟</td>
+  				<td class="light" id="f7">♟</td>
+  				<td class="dark" id="g7">♟</td>
+  				<td class="light" id="h7">♟</td>
+  			</tr>
+  			<tr>
+  				<th style="color: white">6</th>
+  				<td class="light" id="a6"></td>
+  				<td class="dark" id="b6"></td>
+  				<td class="light" id="c6"></td>
+  				<td class="dark" id="d6"></td>
+  				<td class="light" id="e6"></td>
+  				<td class="dark" id="f6"></td>
+  				<td class="light" id="g6"></td>
+  				<td class="dark" id="h6"></td>
+  			</tr>
+  			<tr>
+  				<th style="color: white">5</th>
+  				<td class="dark" id="a5"></td>
+  				<td class="light" id="b5"></td>
+  				<td class="dark" id="c5"></td>
+  				<td class="light" id="d5"></td>
+  				<td class="dark" id="e5"></td>
+  				<td class="light" id="f5"></td>
+  				<td class="dark" id="g5"></td>
+  				<td class="light" id="h5"></td>
+  			</tr>
+  			<tr>
+  				<th style="color: white">4</th>
+  				<td class="light" id="a4"></td>
+  				<td class="dark" id="b4"></td>
+  				<td class="light" id="c4"></td>
+  				<td class="dark" id="d4"></td>
+  				<td class="light" id="e4"></td>
+  				<td class="dark" id="f4"></td>
+  				<td class="light" id="g4"></td>
+  				<td class="dark" id="h4"></td>
+  			</tr>
+  			<tr>
+  				<th style="color: white">3</th>
+  				<td class="dark" id="a3"></td>
+  				<td class="light" id="b3"></td>
+  				<td class="dark" id="c3"></td>
+  				<td class="light" id="d3"></td>
+  				<td class="dark" id="e3"></td>
+  				<td class="light" id="f3"></td>
+  				<td class="dark" id="g3"></td>
+  				<td class="light" id="h3"></td>
+  			</tr>
+  			<tr>
+  				<th style="color: white">2</th>
+  				<td class="light" id="a2">♙</td>
+  				<td class="dark" id="b2">♙</td>
+  				<td class="light" id="c2">♙</td>
+  				<td class="dark" id="d2">♙</td>
+  				<td class="light" id="e2">♙</td>
+  				<td class="dark" id="f2">♙</td>
+  				<td class="light" id="g2">♙</td>
+  				<td class="dark" id="h2">♙</td>
+  			</tr>
+  			<tr>
+  				<th style="color: white">1</th>
+  				<td class="dark" id="a1">♖</td>
+  				<td class="light" id="b1">♘</td>
+  				<td class="dark" id="c1">♗</td>
+  				<td class="light" id="d1">♕</td>
+  				<td class="dark" id="e1">♔</td>
+  				<td class="light" id="f1">♗</td>
+  				<td class="dark" id="g1">♘</td>
+  				<td class="light" id="h1">♖</td>
+  			</tr>
+  		</tbody>
+  	</table>
+    <a id="ai-best-move">Best Move</a>
+  </div>
 
-<div class="sidebar" id="mySidebar">
-  <button class="closeButton" onclick="closeSidebar()">Close &times;</button>
-  <a>Current Fen:</a>
-  <p id="fen" style="color: grey; margin: 15px; font-size: 12px;">rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1</p>
-  <a>Predicted Board State</a>
-  <table class="chess-board-lil">
-		<tbody>
-			<tr>
-				<th></th>
-				<th style="color: white">a</th>
-				<th style="color: white">b</th>
-				<th style="color: white">c</th>
-				<th style="color: white">d</th>
-				<th style="color: white">e</th>
-				<th style="color: white">f</th>
-				<th style="color: white">g</th>
-				<th style="color: white">h</th>
-			</tr>
-			<tr>
-				<th style="color: white">8</th>
-				<td class="light" id="a8">♜</td>
-				<td class="dark" id="b8">♞</td>
-				<td class="light" id="c8">♝</td>
-				<td class="dark" id="d8">♛</td>
-				<td class="light" id="e8">♚</td>
-				<td class="dark" id="f8">♝</td>
-				<td class="light" id="g8">♞</td>
-				<td class="dark" id="h8">♜</td>
-			</tr>
-			<tr>
-				<th style="color: white">7</th>
-				<td class="dark" id="a7">♟</td>
-				<td class="light" id="b7">♟</td>
-				<td class="dark" id="c7">♟</td>
-				<td class="light" id="d7">♟</td>
-				<td class="dark" id="e7">♟</td>
-				<td class="light" id="f7">♟</td>
-				<td class="dark" id="g7">♟</td>
-				<td class="light" id="h7">♟</td>
-			</tr>
-			<tr>
-				<th style="color: white">6</th>
-				<td class="light" id="a6"></td>
-				<td class="dark" id="b6"></td>
-				<td class="light" id="c6"></td>
-				<td class="dark" id="d6"></td>
-				<td class="light" id="e6"></td>
-				<td class="dark" id="f6"></td>
-				<td class="light" id="g6"></td>
-				<td class="dark" id="h6"></td>
-			</tr>
-			<tr>
-				<th style="color: white">5</th>
-				<td class="dark" id="a5"></td>
-				<td class="light" id="b5"></td>
-				<td class="dark" id="c5"></td>
-				<td class="light" id="d5"></td>
-				<td class="dark" id="e5"></td>
-				<td class="light" id="f5"></td>
-				<td class="dark" id="g5"></td>
-				<td class="light" id="h5"></td>
-			</tr>
-			<tr>
-				<th style="color: white">4</th>
-				<td class="light" id="a4"></td>
-				<td class="dark" id="b4"></td>
-				<td class="light" id="c4"></td>
-				<td class="dark" id="d4"></td>
-				<td class="light" id="e4"></td>
-				<td class="dark" id="f4"></td>
-				<td class="light" id="g4"></td>
-				<td class="dark" id="h4"></td>
-			</tr>
-			<tr>
-				<th style="color: white">3</th>
-				<td class="dark" id="a3"></td>
-				<td class="light" id="b3"></td>
-				<td class="dark" id="c3"></td>
-				<td class="light" id="d3"></td>
-				<td class="dark" id="e3"></td>
-				<td class="light" id="f3"></td>
-				<td class="dark" id="g3"></td>
-				<td class="light" id="h3"></td>
-			</tr>
-			<tr>
-				<th style="color: white">2</th>
-				<td class="light" id="a2">♙</td>
-				<td class="dark" id="b2">♙</td>
-				<td class="light" id="c2">♙</td>
-				<td class="dark" id="d2">♙</td>
-				<td class="light" id="e2">♙</td>
-				<td class="dark" id="f2">♙</td>
-				<td class="light" id="g2">♙</td>
-				<td class="dark" id="h2">♙</td>
-			</tr>
-			<tr>
-				<th style="color: white">1</th>
-				<td class="dark" id="a1">♖</td>
-				<td class="light" id="b1">♘</td>
-				<td class="dark" id="c1">♗</td>
-				<td class="light" id="d1">♕</td>
-				<td class="dark" id="e1">♔</td>
-				<td class="light" id="f1">♗</td>
-				<td class="dark" id="g1">♘</td>
-				<td class="light" id="h1">♖</td>
-			</tr>
-		</tbody>
-	</table>
-  <a id="ai-best-move">Best Move</a>
-</div>
+  <div class="Ban"> 
+    <button class="wbutton" onclick="openSidebar()">
+      <p>Reveal AI</p>
+    </button>
+  </div>
 
-<div class="Ban"> 
-  <button class="wbutton" onclick="openSidebar()">
-    <p>Reveal AI</p>
-  </button>
-</div>
-
-<div class="main" style="margin-left:20px">
-	<div class="teal">
-	  <div class="container">
-		<h1>Fog-of-War Chess: EidolonZero</h1>
-	  </div>
-	</div>
-	 <table class="chess-board">
-		<tbody>
-			<tr>
-				<th></th>
-				<th>a</th>
-				<th>b</th>
-				<th>c</th>
-				<th>d</th>
-				<th>e</th>
-				<th>f</th>
-				<th>g</th>
-				<th>h</th>
-			</tr>
-			<tr>
-				<th>8</th>
-				<td class="light" id="main-a8">♜</td>
-				<td class="dark" id="main-b8">♞</td>
-				<td class="light" id="main-c8">♝</td>
-				<td class="dark" id="main-d8">♛</td>
-				<td class="light" id="main-e8">♚</td>
-				<td class="dark" id="main-f8">♝</td>
-				<td class="light" id="main-g8">♞</td>
-				<td class="dark" id="main-h8">♜</td>
-			</tr>
-			<tr>
-				<th>7</th>
-				<td class="dark" id="main-a7">♟</td>
-				<td class="light" id="main-b7">♟</td>
-				<td class="dark" id="main-c7">♟</td>
-				<td class="light" id="main-d7">♟</td>
-				<td class="dark" id="main-e7">♟</td>
-				<td class="light" id="main-f7">♟</td>
-				<td class="dark" id="main-g7">♟</td>
-				<td class="light" id="main-h7">♟</td>
-			</tr>
-			<tr>
-				<th>6</th>
-				<td class="light" id="main-a6"></td>
-				<td class="dark" id="main-b6"></td>
-				<td class="light" id="main-c6"></td>
-				<td class="dark" id="main-d6"></td>
-				<td class="light" id="main-e6"></td>
-				<td class="dark" id="main-f6"></td>
-				<td class="light" id="main-g6"></td>
-				<td class="dark" id="main-h6"></td>
-			</tr>
-			<tr>
-				<th>5</th>
-				<td class="dark" id="main-a5"></td>
-				<td class="light" id="main-b5"></td>
-				<td class="dark" id="main-c5"></td>
-				<td class="light" id="main-d5"></td>
-				<td class="dark" id="main-e5"></td>
-				<td class="light" id="main-f5"></td>
-				<td class="dark" id="main-g5"></td>
-				<td class="light" id="main-h5"></td>
-			</tr>
-			<tr>
-				<th>4</th>
-				<td class="light" id="main-a4"></td>
-				<td class="dark" id="main-b4"></td>
-				<td class="light" id="main-c4"></td>
-				<td class="dark" id="main-d4"></td>
-				<td class="light" id="main-e4"></td>
-				<td class="dark" id="main-f4"></td>
-				<td class="light" id="main-g4"></td>
-				<td class="dark" id="main-h4"></td>
-			</tr>
-			<tr>
-				<th>3</th>
-				<td class="dark" id="main-a3"></td>
-				<td class="light" id="main-b3"></td>
-				<td class="dark" id="main-c3"></td>
-				<td class="light" id="main-d3"></td>
-				<td class="dark" id="main-e3"></td>
-				<td class="light" id="main-f3"></td>
-				<td class="dark" id="main-g3"></td>
-				<td class="light" id="main-h3"></td>
-			</tr>
-			<tr>
-				<th>2</th>
-				<td class="light" id="main-a2">♙</td>
-				<td class="dark" id="main-b2">♙</td>
-				<td class="light" id="main-c2">♙</td>
-				<td class="dark" id="main-d2">♙</td>
-				<td class="light" id="main-e2">♙</td>
-				<td class="dark" id="main-f2">♙</td>
-				<td class="light" id="main-g2">♙</td>
-				<td class="dark" id="main-h2">♙</td>
-			</tr>
-			<tr>
-				<th>1</th>
-				<td class="dark" id="main-a1">♖</td>
-				<td class="light" id="main-b1">♘</td>
-				<td class="dark" id="main-c1">♗</td>
-				<td class="light" id="main-d1">♕</td>
-				<td class="dark" id="main-e1">♔</td>
-				<td class="light" id="main-f1">♗</td>
-				<td class="dark" id="main-g1">♘</td>
-				<td class="light" id="main-h1">♖</td>
-			</tr>
-		</tbody>
-	</table>
+  <div class="main" style="margin-left:20px">
+  	<div class="teal">
+  	  <div class="container">
+  		<h1>Fog-of-War Chess: EidolonZero</h1>
+  	  </div>
+  	</div>
+  	 <table class="chess-board">
+  		<tbody>
+  			<tr>
+  				<th></th>
+  				<th>a</th>
+  				<th>b</th>
+  				<th>c</th>
+  				<th>d</th>
+  				<th>e</th>
+  				<th>f</th>
+  				<th>g</th>
+  				<th>h</th>
+  			</tr>
+  			<tr>
+  				<th>8</th>
+  				<td class="light" id="main-a8">♜</td>
+  				<td class="dark" id="main-b8">♞</td>
+  				<td class="light" id="main-c8">♝</td>
+  				<td class="dark" id="main-d8">♛</td>
+  				<td class="light" id="main-e8">♚</td>
+  				<td class="dark" id="main-f8">♝</td>
+  				<td class="light" id="main-g8">♞</td>
+  				<td class="dark" id="main-h8">♜</td>
+  			</tr>
+  			<tr>
+  				<th>7</th>
+  				<td class="dark" id="main-a7">♟</td>
+  				<td class="light" id="main-b7">♟</td>
+  				<td class="dark" id="main-c7">♟</td>
+  				<td class="light" id="main-d7">♟</td>
+  				<td class="dark" id="main-e7">♟</td>
+  				<td class="light" id="main-f7">♟</td>
+  				<td class="dark" id="main-g7">♟</td>
+  				<td class="light" id="main-h7">♟</td>
+  			</tr>
+  			<tr>
+  				<th>6</th>
+  				<td class="light" id="main-a6"></td>
+  				<td class="dark" id="main-b6"></td>
+  				<td class="light" id="main-c6"></td>
+  				<td class="dark" id="main-d6"></td>
+  				<td class="light" id="main-e6"></td>
+  				<td class="dark" id="main-f6"></td>
+  				<td class="light" id="main-g6"></td>
+  				<td class="dark" id="main-h6"></td>
+  			</tr>
+  			<tr>
+  				<th>5</th>
+  				<td class="dark" id="main-a5"></td>
+  				<td class="light" id="main-b5"></td>
+  				<td class="dark" id="main-c5"></td>
+  				<td class="light" id="main-d5"></td>
+  				<td class="dark" id="main-e5"></td>
+  				<td class="light" id="main-f5"></td>
+  				<td class="dark" id="main-g5"></td>
+  				<td class="light" id="main-h5"></td>
+  			</tr>
+  			<tr>
+  				<th>4</th>
+  				<td class="light" id="main-a4"></td>
+  				<td class="dark" id="main-b4"></td>
+  				<td class="light" id="main-c4"></td>
+  				<td class="dark" id="main-d4"></td>
+  				<td class="light" id="main-e4"></td>
+  				<td class="dark" id="main-f4"></td>
+  				<td class="light" id="main-g4"></td>
+  				<td class="dark" id="main-h4"></td>
+  			</tr>
+  			<tr>
+  				<th>3</th>
+  				<td class="dark" id="main-a3"></td>
+  				<td class="light" id="main-b3"></td>
+  				<td class="dark" id="main-c3"></td>
+  				<td class="light" id="main-d3"></td>
+  				<td class="dark" id="main-e3"></td>
+  				<td class="light" id="main-f3"></td>
+  				<td class="dark" id="main-g3"></td>
+  				<td class="light" id="main-h3"></td>
+  			</tr>
+  			<tr>
+  				<th>2</th>
+  				<td class="light" id="main-a2">♙</td>
+  				<td class="dark" id="main-b2">♙</td>
+  				<td class="light" id="main-c2">♙</td>
+  				<td class="dark" id="main-d2">♙</td>
+  				<td class="light" id="main-e2">♙</td>
+  				<td class="dark" id="main-f2">♙</td>
+  				<td class="light" id="main-g2">♙</td>
+  				<td class="dark" id="main-h2">♙</td>
+  			</tr>
+  			<tr>
+  				<th>1</th>
+  				<td class="dark" id="main-a1">♖</td>
+  				<td class="light" id="main-b1">♘</td>
+  				<td class="dark" id="main-c1">♗</td>
+  				<td class="light" id="main-d1">♕</td>
+  				<td class="dark" id="main-e1">♔</td>
+  				<td class="light" id="main-f1">♗</td>
+  				<td class="dark" id="main-g1">♘</td>
+  				<td class="light" id="main-h1">♖</td>
+  			</tr>
+  		</tbody>
+  	</table>
 	
-	<h3>Input a move below:</h3>
-	<input type="text" id="move">
-	<button onclick="makemove()">
-		<p>Make Move</p>
-	</button>
+  	<h3>Input a move below:</h3>
+  	<input type="text" id="move">
+  	<button onclick="makemove()">
+  		<p>Make Move</p>
+  	</button>
 	
-</div>
-
+  </div>
+</body>
 <script>
   function openSidebar() {
     document.getElementById("mySidebar").style.display = "block";
