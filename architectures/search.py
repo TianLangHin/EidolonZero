@@ -49,7 +49,7 @@ def p_uct(
     c_puct, dirichlet_alpha, epsilon, move_limit = config
 
     tree: dict[str, dict[Action, Stats]] = {}
-    root = startpos
+    root = startpos.copy()
 
     for simulation in range(num_simulations):
         board = root
@@ -115,4 +115,22 @@ def p_uct(
             tree[key][action].mean_action_value = (tree[key][action].visit_count
                 / tree[key][action].total_action_value)
 
-    return tree[root.fen()]
+    final_move_policy = tree[startpos.fen()]
+    total_visit_count = sum(s.visit_count for s in final_move_policy.values())
+
+    mate_in_1_key = None
+    current_turn = GameOutcome.WHITE if startpos.turn else GameOutcome.BLACK
+    for action in final_move_policy.keys():
+        startpos.push(action)
+        if current_turn == game_outcome(startpos):
+            mate_in_1_key = action
+        startpos.pop()
+        if mate_in_1_key is not None:
+            break
+
+    if mate_in_1_key is not None:
+        for action in final_move_policy.keys():
+            final_move_policy[action].visit_count = (total_visit_count
+                if action == mate_in_1_key else 0)
+
+    return final_move_policy
