@@ -1,2 +1,3 @@
 from evaluation.baseline import RandomBaselinePlayer
 from evaluation.tournament import PlayConfig, against_baseline
+from evaluation.vae_accuracy import piece_type_accuracy, piece_location_iou_accuracy
