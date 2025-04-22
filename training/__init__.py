@@ -2,6 +2,7 @@ from architectures import ConvNet, VAE, ConvNetLossFn, DefoggerLossFn, \
     PuctConfig, Stats, p_uct, most_likely_predicted_state
 from boards import FoggedBoard, MaterialCounter, fogged_board_to_tensor, position_to_tensor, \
     move_gen_to_tensor, move_policy_to_tensor, tensor_to_position, tensor_to_move_gen
+from evaluation import piece_type_accuracy, piece_location_iou_accuracy
 
 from collections import namedtuple
 import chess
@@ -25,6 +26,10 @@ OptimConfig = namedtuple('OptimConfig', [
     'lr',
     'weight_decay'
 ])
+
+def average(data: List[float]) -> float:
+    length = len(data)
+    return sum(element / length for element in data)
 
 # Will mutate the given model.
 # Also returns the sample games for record keeping.
@@ -51,6 +56,9 @@ def training_step(
     convnet_value_label = []
     defogger_data = []
     defogger_label = []
+
+    defogger_type_accuracy = []
+    defogger_location_iou_accuracy = []
 
     for game in range(sample_games):
         print(f'Game {game + 1}', flush=True)
@@ -86,8 +94,10 @@ def training_step(
                     fogged_tensor,
                     fogged_board.hidden_material
                 )
-                print(defogged_state, flush=True)
-                print('Search start', flush=True)
+                defogger_type_accuracy.append(
+                    piece_type_accuracy(defogged_state, board, fogged_board))
+                defogger_location_iou_accuracy.append(
+                    piece_location_iou_accuracy(defogged_state, board, fogged_board))
 
                 s = time.perf_counter()
                 move_search_stats = p_uct(defogged_state, move_tensor, simulations, convnet_model, puct_config)
@@ -117,7 +127,6 @@ def training_step(
             print(f'Chosen move: {chosen_move}', flush=True)
 
             board.push(chosen_move)
-            print(board, flush=True)
 
             current_material = MaterialCounter.material_in_board(board)
             if current_material.black_kings == 0:
@@ -148,6 +157,9 @@ def training_step(
         convnet_value_label.extend(game_convnet_value)
         defogger_data.extend(game_defogger_data)
         defogger_label.extend(game_defogger_label)
+
+    print('VAE Piece Type Accuracy:', average(defogger_type_accuracy), flush=True)
+    print('VAE Piece Location IoU Accuracy:', average(defogger_location_iou_accuracy), flush=True)
 
     # Loss functions.
     convnet_loss_fn = ConvNetLossFn()

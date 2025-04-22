@@ -46,8 +46,8 @@ if __name__ == '__main__':
     vae = VAE(512)
 
     # Start off with saving the very first untrained model.
-    # torch.save(conv.state_dict(), os.path.join(os.getcwd(), 'models', 'convnet-0.pt'))
-    # torch.save(vae.state_dict(), os.path.join(os.getcwd(), 'models', 'vae-0.pt'))
+    torch.save(conv.state_dict(), os.path.join(os.getcwd(), 'models', 'convnet-0.pt'))
+    torch.save(vae.state_dict(), os.path.join(os.getcwd(), 'models', 'vae-0.pt'))
 
     # Initial hyperparameter settings.
     initial_training_config = TrainingConfig(
@@ -68,8 +68,10 @@ if __name__ == '__main__':
     initial_convnet_optim = OptimConfig(lr=1e-4, weight_decay=1e-6)
     initial_defogger_optim = OptimConfig(lr=1e-4, weight_decay=1e-6)
 
+    training_steps = 12
+
     setting = 'initial'
-    for step in range(3):
+    for step in range(training_steps):
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
         training_with_load(
@@ -85,13 +87,12 @@ if __name__ == '__main__':
         **(initial_puct_config._asdict() | {'c_puct': 1.0}))
 
     setting = 'cpuct1.0'
-    for step in range(3):
+    for step in range(training_steps):
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
         training_with_load(
             prev_model,
-            (f'convnet-{setting}-{step + 1}.pt', f'vae-{setting}-{step + 1}.pt'),
-            initial_training_config,
+            (f'convnet-{setting}-{step + 1}.pt', f'vae-{setting}-{step + 1}.pt'), initial_training_config,
             puct_config,
             initial_convnet_optim,
             initial_defogger_optim)
@@ -117,7 +118,7 @@ if __name__ == '__main__':
         **(initial_puct_config._asdict() | {'epsilon': 0.5}))
 
     setting = 'epsilon0.5'
-    for step in range(3):
+    for step in range(training_steps):
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
         training_with_load(
@@ -135,7 +136,7 @@ if __name__ == '__main__':
         **(initial_defogger_optim._asdict() | {'weight_decay': 0}))
 
     setting = 'weightdecay0'
-    for step in range(3):
+    for step in range(training_steps):
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
         training_with_load(
