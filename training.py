@@ -71,7 +71,9 @@ if __name__ == '__main__':
     training_steps = 12
 
     setting = 'initial'
+    print(f'Setting: {setting}')
     for step in range(training_steps):
+        print(f'Training step: {step + 1}')
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
         training_with_load(
@@ -87,7 +89,9 @@ if __name__ == '__main__':
         **(initial_puct_config._asdict() | {'c_puct': 1.0}))
 
     setting = 'cpuct1.0'
+    print(f'Setting: {setting}')
     for step in range(training_steps):
+        print(f'Training step: {step + 1}')
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
         training_with_load(
@@ -102,7 +106,9 @@ if __name__ == '__main__':
         **(initial_puct_config._asdict() | {'dirichlet_alpha': 0.15}))
 
     setting = 'dirichletalpha0.15'
-    for step in range(3):
+    print(f'Setting: {setting}')
+    for step in range(training_steps):
+        print(f'Training step: {step + 1}')
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
         training_with_load(
@@ -118,7 +124,9 @@ if __name__ == '__main__':
         **(initial_puct_config._asdict() | {'epsilon': 0.5}))
 
     setting = 'epsilon0.5'
+    print(f'Setting: {setting}')
     for step in range(training_steps):
+        print(f'Training step: {step + 1}')
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
         training_with_load(
@@ -136,7 +144,9 @@ if __name__ == '__main__':
         **(initial_defogger_optim._asdict() | {'weight_decay': 0}))
 
     setting = 'weightdecay0'
+    print(f'Setting: {setting}')
     for step in range(training_steps):
+        print(f'Training step: {step + 1}')
         prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
             else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
         training_with_load(
