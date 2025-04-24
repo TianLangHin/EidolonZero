@@ -17,7 +17,7 @@ FORMAT = '''
 
 def tourney_against_baseline(
         models_and_config: List[Tuple[ConvNet, VAE, PlayConfig, str]],
-        games: int, seed: int, filename: str):
+        games: int, seed: int, filename: str, seed_increment: int = 1):
 
     with open(filename, 'wt') as f:
 
@@ -26,26 +26,30 @@ def tourney_against_baseline(
             np.random.seed(seed)
             torch.manual_seed(seed)
 
-            baseline = RandomBaselinePlayer(seed)
-
             conv.eval()
             vae.eval()
 
-            for i in range(games):
+            game_seed = seed
+            for _ in range(games):
+                baseline = RandomBaselinePlayer(game_seed)
                 hist, outcome = against_baseline(
                     baseline, (conv, vae), play_config=play_config, random_as_white=True,
                     verbose=True)
                 result = ('1-0' if outcome == 1.0 else '0-1' if outcome == -1.0 else '1/2-1/2')
                 f.write(FORMAT.format(f'Random-{seed}', name, result, ' '.join(hist)))
                 f.flush()
+                game_seed += seed_increment
 
-            for i in range(games):
+            game_seed = seed
+            for _ in range(games):
+                baseline = RandomBaselinePlayer(game_seed)
                 hist, outcome = against_baseline(
                     baseline, (conv, vae), play_config=play_config, random_as_white=False,
                     verbose=True)
                 result = ('1-0' if outcome == 1.0 else '0-1' if outcome == -1.0 else '1/2-1/2')
                 f.write(FORMAT.format(name, f'Random-{seed}', result, ' '.join(hist)))
                 f.flush()
+                game_seed += seed_increment
 
 def loaded_models(variant: str, iteration: int) -> Tuple[ConvNet, VAE]:
     conv = ConvNet()

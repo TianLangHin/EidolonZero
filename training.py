@@ -136,23 +136,3 @@ if __name__ == '__main__':
             puct_config,
             initial_convnet_optim,
             initial_defogger_optim)
-
-    # Change `weight_decay` to `0`.
-    convnet_optim = OptimConfig(
-        **(initial_convnet_optim._asdict() | {'weight_decay': 0}))
-    defogger_optim = OptimConfig(
-        **(initial_defogger_optim._asdict() | {'weight_decay': 0}))
-
-    setting = 'weightdecay0'
-    print(f'Setting: {setting}')
-    for step in range(training_steps):
-        print(f'Training step: {step + 1}')
-        prev_model = (('convnet-0.pt', 'vae-0.pt') if step == 0
-            else (f'convnet-{setting}-{step}.pt', f'vae-{setting}-{step}.pt'))
-        training_with_load(
-            prev_model,
-            (f'convnet-{setting}-{step + 1}.pt', f'vae-{setting}-{step + 1}.pt'),
-            initial_training_config,
-            initial_puct_config,
-            convnet_optim,
-            defogger_optim)

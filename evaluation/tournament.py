@@ -101,3 +101,60 @@ def against_baseline(
             print(game_state)
 
     return game_history, status
+
+def head_to_head(
+        model_white: Tuple[ConvNet, VAE], model_black: Tuple[ConvNet, VAE],
+        play_config_white: PlayConfig, play_config_black: PlayConfig) -> Tuple[List[str], int]:
+
+    game_state = FullState()
+    game_history = []
+    ply_number = 1
+
+    while (status := game_status(game_state)) is None:
+
+        playing_model = model_white if ply_number % 2 == 1 else model_black
+        convnet, defogger = playing_model
+
+        legal_move_list = list(FoggedBoard.generate_fow_chess_moves(game_state))
+        legal_move_tensor = move_gen_to_tensor((move for move in legal_move_list), game_state.turn)
+        fogged_board = FoggedBoard.derived_from_full_state(game_state)
+        fogged_tensor = fogged_board_to_tensor(fogged_board)
+
+        summed_move_policy = torch.zeros(torch.Size([73, 8, 8]))
+        # Iterate over all possibilities
+        for _ in range(possibilities):
+            # Conduct prediction from VAE.
+            defogged_state = most_likely_predicted_state(
+                defogger(fogged_tensor[:13,:,:])[0],
+                fogged_tensor,
+                fogged_board.hidden_material)
+
+            # Now conduct the P-UCT search using the ConvNet.
+            search_result = p_uct(defogged_state, legal_move_tensor,
+                simulations, convnet, puct_config)
+
+            # Extract the visit count of each move, then make the distribution.
+            total_visit_count = sum(stats.visit_count for stats in search_result.values())
+            move_policy_generator = (
+                (action, stats.visit_count / total_visit_count)
+                for action, stats in search_result.items() if action in legal_move_list)
+            move_policy_tensor = move_policy_to_tensor(move_policy_generator, game_state.turn)
+            if move_policy_tensor.sum() == 0:
+                move_policy_tensor += move_gen_to_tensor((move for move in [legal_move_list[0]]), game_state.turn)
+
+            # Add this to the policy considering all possibilities.
+            summed_move_policy += move_policy_tensor
+
+        move = next(tensor_to_move_gen(
+            (summed_move_policy == summed_move_policy.max()).int(),
+            position=game_state
+        ))
+
+        try:
+            game_state.push(move)
+        except AssertionError:
+            game_state.push(move := legal_move_list[0])
+        game_history.append(move.uci())
+        ply_number += 1
+
+    return game_history, status
