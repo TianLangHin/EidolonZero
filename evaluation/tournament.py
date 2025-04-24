@@ -115,8 +115,12 @@ def head_to_head(
 
     while (status := game_status(game_state)) is None:
 
-        playing_model = model_white if ply_number % 2 == 1 else model_black
-        convnet, defogger = playing_model
+        if ply_number % 2 == 1:
+            convnet, defogger = model_white
+            puct_config, possibilities, simulations = play_config_white
+        else:
+            convnet, defogger = model_black
+            puct_config, possibilities, simulations = play_config_black
 
         legal_move_list = list(FoggedBoard.generate_fow_chess_moves(game_state))
         legal_move_tensor = move_gen_to_tensor((move for move in legal_move_list), game_state.turn)
