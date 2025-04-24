@@ -38,22 +38,20 @@ def against_baseline(
 
     while (status := game_status(game_state)) is None:
 
+        s = perf_counter()
+
         # In both cases, we need to determine all the legal moves available.
         legal_move_list = list(FoggedBoard.generate_fow_chess_moves(game_state))
 
         # If it is random baseline turn to play, choose the move.
         if (ply_number % 2 == 1) == random_as_white:
             move = random_baseline.choose_move(legal_move_list)
-            if verbose:
-                print(f'Ply {ply_number}, Baseline: {move.uci()}')
         else:
             # For the bot to work, it needs to know the legal moves available as a tensor.
             legal_move_tensor = move_gen_to_tensor((move for move in legal_move_list), game_state.turn)
             # We then derive the board for it to play from.
             fogged_board = FoggedBoard.derived_from_full_state(game_state)
             fogged_tensor = fogged_board_to_tensor(fogged_board)
-
-            s = perf_counter()
 
             summed_move_policy = torch.zeros(torch.Size([73, 8, 8]))
             # Iterate over all possibilities
@@ -80,35 +78,40 @@ def against_baseline(
                 # Add this to the policy considering all possibilities.
                 summed_move_policy += move_policy_tensor
 
-            e = perf_counter()
-
             # Choose the move most explored.
             move = next(tensor_to_move_gen(
                 (summed_move_policy == summed_move_policy.max()).int(),
                 position=game_state
             ))
 
-            if verbose:
-                print(f'Ply {ply_number}, Model: {move.uci()}')
-                print(f'Time elapsed: {e-s} seconds')
+        e = perf_counter()
 
         # Update the overall game state.
-        game_state.push(move)
+        try:
+            game_state.push(move)
+        except AssertionError:
+            game_state.push(move := legal_move_list[0])
+
+        if verbose:
+            print(f'Ply {ply_number}, Move: {move.uci()}, Time: {e-s}s')
+
         game_history.append(move.uci())
         ply_number += 1
 
-        if verbose:
-            print(game_state)
 
     return game_history, status
 
 def head_to_head(
         model_white: Tuple[ConvNet, VAE], model_black: Tuple[ConvNet, VAE],
-        play_config_white: PlayConfig, play_config_black: PlayConfig) -> Tuple[List[str], int]:
+        play_config_white: PlayConfig, play_config_black: PlayConfig,
+        verbose: bool = True) -> Tuple[List[str], int]:
 
     game_state = FullState()
     game_history = []
     ply_number = 1
+
+    if verbose:
+        print('Game start')
 
     while (status := game_status(game_state)) is None:
 
@@ -119,6 +122,8 @@ def head_to_head(
         legal_move_tensor = move_gen_to_tensor((move for move in legal_move_list), game_state.turn)
         fogged_board = FoggedBoard.derived_from_full_state(game_state)
         fogged_tensor = fogged_board_to_tensor(fogged_board)
+
+        s = perf_counter()
 
         summed_move_policy = torch.zeros(torch.Size([73, 8, 8]))
         # Iterate over all possibilities
@@ -145,6 +150,8 @@ def head_to_head(
             # Add this to the policy considering all possibilities.
             summed_move_policy += move_policy_tensor
 
+        e = perf_counter()
+
         move = next(tensor_to_move_gen(
             (summed_move_policy == summed_move_policy.max()).int(),
             position=game_state
@@ -154,6 +161,10 @@ def head_to_head(
             game_state.push(move)
         except AssertionError:
             game_state.push(move := legal_move_list[0])
+
+        if verbose:
+            print(f'Ply {ply_number}, Move: {move.uci()}, Time: {e-s}s')
+
         game_history.append(move.uci())
         ply_number += 1
 
