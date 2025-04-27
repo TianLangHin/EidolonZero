@@ -14,10 +14,10 @@ const pieceMap = {
   'n': '♞'
 }
 
-async function step1() {
+async function step1(daMove) {
   const fen = document.getElementById('fen').innerHTML
-  const move = document.getElementById('move').value
-  const params = new URLSearchParams({ fen: fen, move: move })
+  const move = daMove
+  const params = new URLSearchParams({ fen: fen, move: daMove })
   const response = await fetch('http://127.0.0.1:5000/makemove?' + params.toString())
   const jsonResponse = await response.json()
   document.getElementById('fen').innerHTML = jsonResponse.new_board.fen;
@@ -80,8 +80,8 @@ async function step5() {
   }
 }
 
-async function makemove() {
-  await step1()
+async function makemove(daMove) {
+  await step1(daMove)
   const [foggedFen, materialCount] = await step2()
   const aiMove = await step3(foggedFen, materialCount)
   await step4(aiMove)
@@ -98,29 +98,33 @@ async function selectPiece(div){
   for(i = 0; i < tr.length; i++){
     td = tr[i].getElementsByTagName("td"); 
     for(ii = 0; ii < td.length; ii++){
-      if(td[ii].style.background == "blue"){  
-        secondID = td[ii].id; break
+      if(td[ii].style.background === "blue"){  
+        secondID = td[ii].id; break; 
       }
     } 
   }
 
   document.getElementById(div.id).style.background = "blue";
 
-  if(secondID!=null){
-    let daMove = "" + secondID + div.id; //UCI string  
+  if(secondID!==null){
+    //before concatenating to make uci, have to doctor both id's to remove "main-" prefix 
+    let secondIDuci = secondID;
+    secondIDuci.replace('main-', '');
+    let divIDuci = div.id;
+    divIDuci.replace('main-',''); //turns 'main-a8' into 'a8'
+    let daMove = "" + secondIDuci + divIDuci; //UCI string  
     makemove(daMove);
 
     //returning squares to normal background colour
-    if(div.className = "light"){
+    if(div.className === "light"){
       document.getElementById(div.id).style.background = "#aaa"
     } else {
       document.getElementById(div.id).style.background = "#eee"
     }
-    if(document.getElementById(secondID).className = "light"){
+    if(document.getElementById(secondID).className === "light"){
       document.getElementById(secondID).style.background = "#aaa"
     } else{ 
       document.getElementById(secondID).style.background = "#eee"
     }
-
   }
 }
