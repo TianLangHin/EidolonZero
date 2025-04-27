@@ -108,10 +108,8 @@ async function selectPiece(div){
 
   if(secondID!==null){
     //before concatenating to make uci, have to doctor both id's to remove "main-" prefix 
-    let secondIDuci = secondID;
-    secondIDuci.replace('main-', '');
-    let divIDuci = div.id;
-    divIDuci.replace('main-',''); //turns 'main-a8' into 'a8'
+    let secondIDuci = secondID.replace('main-', '');
+    let divIDuci = div.id.replace('main-',''); //turns 'main-a8' into 'a8'
     let daMove = "" + secondIDuci + divIDuci; //UCI string  
     makemove(daMove);
 
