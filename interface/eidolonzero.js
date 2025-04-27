@@ -87,3 +87,40 @@ async function makemove() {
   await step4(aiMove)
   await step5()
 }
+
+async function selectPiece(div){
+  //blue is temporary highlight
+  //default/deselected colour = "?", default based on the class, need to get class that ID is present in somehow
+  let secondID = null;
+  // board = document.getElementsByClassName("chess-board-lil");
+  board = document.getElementById("main-chess-board");
+  tr = board.getElementsByTagName("tr");
+  for(i = 0; i < tr.length; i++){
+    td = tr[i].getElementsByTagName("td"); 
+    for(ii = 0; ii < td.length; ii++){
+      if(td[ii].style.background == "blue"){  
+        secondID = td[ii].id; break
+      }
+    } 
+  }
+
+  document.getElementById(div.id).style.background = "blue";
+
+  if(secondID!=null){
+    let daMove = "" + secondID + div.id; //UCI string  
+    makemove(daMove);
+
+    //returning squares to normal background colour
+    if(div.className = "light"){
+      document.getElementById(div.id).style.background = "#aaa"
+    } else {
+      document.getElementById(div.id).style.background = "#eee"
+    }
+    if(document.getElementById(secondID).className = "light"){
+      document.getElementById(secondID).style.background = "#aaa"
+    } else{ 
+      document.getElementById(secondID).style.background = "#eee"
+    }
+
+  }
+}
