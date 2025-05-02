@@ -20,6 +20,8 @@ def piece_type_accuracy(
     correct_piece_type_predictions = sum(
         true.piece_at(sq) == pt for sq, pt in pred_pieces_map.items())
 
+    if hidden_piece_count == 0:
+        return 0.0
     return correct_piece_type_predictions / hidden_piece_count
 
 # Intersection over union (piece locations)
@@ -38,4 +40,9 @@ def piece_location_iou_accuracy(
         sq for sq in range(64)
         if sq not in known_pieces_map and true.piece_at(sq) is not None}
 
-    return len(pred_set & true_set) / len(pred_set | true_set)
+    intersection = len(pred_set & true_set)
+    union = len(pred_set | true_set)
+
+    if union == 0:
+        return 0.0
+    return intersection / union

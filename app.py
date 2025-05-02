@@ -29,11 +29,11 @@ CONFIG = PlayConfig(
 CONVNET = ConvNet()
 VAE = VAE(512)
 CONVNET.load_state_dict(torch.load(
-    os.path.join(os.getcwd(), 'models', 'convnet-weightdecay0-3.pt'),
+    os.path.join(os.getcwd(), 'models', 'convnet-dirichletalpha0.15-12.pt'),
     weights_only=True
 ))
 VAE.load_state_dict(torch.load(
-    os.path.join(os.getcwd(), 'models', 'vae-weightdecay0-3.pt'),
+    os.path.join(os.getcwd(), 'models', 'vae-dirichletalpha0.15-12.pt'),
     weights_only=True
 ))
 CONVNET.eval()
