@@ -115,14 +115,14 @@ async function selectPiece(div){
 
     //returning squares to normal background colour
     if(div.className === "light"){
-      document.getElementById(div.id).style.background = "#aaa"
-    } else {
       document.getElementById(div.id).style.background = "#eee"
+    } else {
+      document.getElementById(div.id).style.background = "#aaa"
     }
     if(document.getElementById(secondID).className === "light"){
-      document.getElementById(secondID).style.background = "#aaa"
-    } else{ 
       document.getElementById(secondID).style.background = "#eee"
+    } else{ 
+      document.getElementById(secondID).style.background = "#aaa"
     }
   }
 }
