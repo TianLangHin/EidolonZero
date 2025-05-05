@@ -1,6 +1,7 @@
 from architectures import ConvNet, VAE, most_likely_predicted_state,p_uct
 from boards import FoggedBoard, MaterialCounter, \
-    fogged_board_to_tensor, move_gen_to_tensor, move_policy_to_tensor, tensor_to_move_gen
+    fogged_board_to_tensor, move_gen_to_tensor, move_policy_to_tensor, tensor_to_move_gen, \
+    position_to_tensor
 from evaluation import PlayConfig
 
 import chess
@@ -113,6 +114,8 @@ def inference(
         fogged_board = FoggedBoard(board, material)
         fogged_board_tensor = fogged_board_to_tensor(fogged_board)
 
+        estimated_value = 0
+
         summed_move_policy = torch.zeros(torch.Size([73, 8, 8]))
         predicted_board = None
         for _ in range(play_config.possibilities):
@@ -123,6 +126,10 @@ def inference(
             )
             if predicted_board is None:
                 predicted_board = defogged_state
+
+            defogged_tensor = position_to_tensor(defogged_state)
+            value, _ = convnet(torch.reshape(defogged_tensor, (1, *defogged_tensor.shape)))
+            estimated_value += value.item()
 
             search_result = p_uct(defogged_state, legal_move_tensor,
                 play_config.simulations, convnet, play_config.puct_config)
@@ -149,7 +156,8 @@ def inference(
                     for sq, (rank_str, file_str) in enumerate(product(ranks, files))
                 }
             },
-            'move': move.uci()
+            'move': move.uci(),
+            'estimate': estimated_value / play_config.possibilities
         }
     except ValueError:
         return None
