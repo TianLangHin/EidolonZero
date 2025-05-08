@@ -1,16 +1,17 @@
 import matplotlib.pyplot as plt
 import re
 
-match_setting = re.compile('Setting: ([a-z0-9.]+)')
-match_training_step = re.compile('Training step: ([0-9]+)')
-match_chosen_move = re.compile('Chosen move: ([a-h1-8]+)')
-match_game_outcome = re.compile('Game outcome: (.*)')
-match_vae_pt_accuracy = re.compile('VAE Piece Type Accuracy: ([0-9.]+)')
-match_vae_iou_accuracy = re.compile('VAE Piece Location IoU Accuracy: ([0-9.]+)')
-match_convnet_loss = re.compile('ConvNet epoch [0-9]+, average loss: ([0-9.]+)')
-match_vae_loss = re.compile('VAE epoch [0-9]+, average loss: ([0-9.]+)')
-
 def parse_logs(filename: str) -> dict:
+
+    match_setting = re.compile('Setting: ([a-z0-9.]+)')
+    match_training_step = re.compile('Training step: ([0-9]+)')
+    match_chosen_move = re.compile('Chosen move: ([a-h1-8]+)')
+    match_game_outcome = re.compile('Game outcome: (.*)')
+    match_vae_pt_accuracy = re.compile('VAE Piece Type Accuracy: ([0-9.]+)')
+    match_vae_iou_accuracy = re.compile('VAE Piece Location IoU Accuracy: ([0-9.]+)')
+    match_convnet_loss = re.compile('ConvNet epoch [0-9]+, average loss: ([0-9.]+)')
+    match_vae_loss = re.compile('VAE epoch [0-9]+, average loss: ([0-9.]+)')
+
     log_results = {}
 
     setting_name = ''
@@ -51,7 +52,21 @@ def parse_logs(filename: str) -> dict:
 
     return log_results
 
-def plot_logs(data: dict):
+def parse_elos(filename: str) -> dict:
+    elo_results = {}
+    elo_line = re.compile('^\\s+[0-9]+ EidolonZero-([a-z0-9.]+)-([0-9]+)\\s+(-?[0-9]+)')
+    untrained_line = re.compile('^\\s+[0-9]+ EidolonZero-untrained\\s+(-?[0-9]+)')
+    with open(filename, 'rt') as f:
+        for line in f:
+            if (matches := elo_line.match(line)) is not None:
+                setting, step, elo = matches.groups()
+                elo_results[setting] = elo_results.get(setting, []) + [(int(step), int(elo))]
+            elif (untrained := untrained_line.match(line)) is not None:
+                elo = int(untrained.group(1))
+                elo_results['untrained'] = elo
+    return elo_results
+
+def plot_vae_logs(data: dict):
     for model_setting in data.keys():
         pt_accuracies = [reading['pt_acc'] for reading in data[model_setting]]
         iou_accuracies = [reading['iou_acc'] for reading in data[model_setting]]
@@ -65,6 +80,27 @@ def plot_logs(data: dict):
         plt.legend(['Piece Type Accuracy', 'Piece Location IoU'])
         plt.savefig(f'vae-accuracy-{model_setting}.png')
 
+def plot_elos(data: dict):
+    fig = plt.figure()
+    plt.title('ELO Rating of EidolonZero Settings Over Training')
+    labels = []
+    for setting in data.keys():
+        if setting == 'untrained':
+            continue
+        performance = [(0, data['untrained'])] + data[setting]
+        performance.sort(key=lambda x: x[0])
+        plt.plot(
+            [p[0] for p in performance],
+            [p[1] for p in performance],
+            marker='s',
+            linestyle='dashed')
+        labels.append(setting)
+    plt.xticks([0, 3, 6, 9, 12])
+    plt.xlabel('Training step')
+    plt.ylabel('ELO')
+    plt.legend(labels)
+    plt.savefig('elo-plot.png')
+
 if __name__ == '__main__':
-    logs_data = parse_logs('logs.txt')
-    plot_logs(logs_data)
+    plot_vae_logs(parse_logs('logs.txt'))
+    plot_elos(parse_elos('elos.txt'))
