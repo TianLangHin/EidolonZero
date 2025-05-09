@@ -67,18 +67,38 @@ def parse_elos(filename: str) -> dict:
     return elo_results
 
 def plot_vae_logs(data: dict):
+    fig = plt.figure()
+    plt.title(f'Defogger Piece Type Prediction Accuracy')
+    labels = []
     for model_setting in data.keys():
         pt_accuracies = [reading['pt_acc'] for reading in data[model_setting]]
+        plt.plot(
+            range(1, len(pt_accuracies) + 1),
+            pt_accuracies,
+            marker='o',
+            linestyle='dashed')
+        labels.append(model_setting)
+    plt.xticks(range(1, 13))
+    plt.xlabel('Training step')
+    plt.ylabel('Piece Type Accuracy')
+    plt.legend(labels)
+    plt.savefig('vae-pt-accuracy.png')
+    fig = plt.figure()
+    plt.title(f'Defogger Piece Location IoU Prediction Accuracy')
+    labels = []
+    for model_setting in data.keys():
         iou_accuracies = [reading['iou_acc'] for reading in data[model_setting]]
-        fig = plt.figure()
-        plt.title(f'Defogger Prediction Accuracy ({model_setting} model)')
-        plt.plot(range(1, len(pt_accuracies) + 1), pt_accuracies)
-        plt.plot(range(1, len(iou_accuracies) + 1), iou_accuracies)
-        plt.xticks(range(1, len(pt_accuracies) + 1))
-        plt.xlabel('Training step')
-        plt.xlabel('Accuracy')
-        plt.legend(['Piece Type Accuracy', 'Piece Location IoU'])
-        plt.savefig(f'vae-accuracy-{model_setting}.png')
+        plt.plot(
+            range(1, len(iou_accuracies) + 1),
+            iou_accuracies,
+            marker='o',
+            linestyle='dashed')
+        labels.append(model_setting)
+    plt.xticks(range(1, 13))
+    plt.xlabel('Training step')
+    plt.ylabel('Piece Location IoU Accuracy')
+    plt.legend(labels)
+    plt.savefig('vae-iou-accuracy.png')
 
 def plot_elos(data: dict):
     fig = plt.figure()
