@@ -1,4 +1,4 @@
-from flask import Flask, after_this_request, jsonify, request
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 import api
@@ -10,6 +10,21 @@ import os
 import random
 import torch
 
+ARGS_TRANSLATE = {
+    'wp': 'white_pawns',
+    'bp': 'black_pawns',
+    'wn': 'white_knights',
+    'bn': 'black_knights',
+    'wb': 'white_bishops',
+    'bb': 'black_bishops',
+    'wr': 'white_rooks',
+    'br': 'black_rooks',
+    'wq': 'white_queens',
+    'bq': 'black_queens',
+    'wk': 'white_kings',
+    'bk': 'black_kings',
+}
+
 SEED = 19937
 random.seed(SEED)
 np.random.seed(SEED)
@@ -18,7 +33,7 @@ torch.manual_seed(SEED)
 CONFIG = PlayConfig(
     puct_config=PuctConfig(
         c_puct=0.5,
-        dirichlet_alpha=0.3,
+        dirichlet_alpha=0.15,
         epsilon=0.25,
         move_limit=128,
     ),
@@ -47,8 +62,7 @@ CORS(app)
 @app.route('/')
 def root():
     return jsonify({
-        'text': 'Hello world!',
-        'misc': 'other stuff'
+        'eidolon-zero': True
     })
 
 @app.route('/test/legalmoves')
@@ -78,44 +92,16 @@ def getfoggedstate():
 @app.route('/inference/stub')
 def stub_inference():
     fen = request.args.get('fen')
-    args_translate = {
-        'wp': 'white_pawns',
-        'bp': 'black_pawns',
-        'wn': 'white_knights',
-        'bn': 'black_knights',
-        'wb': 'white_bishops',
-        'bb': 'black_bishops',
-        'wr': 'white_rooks',
-        'br': 'black_rooks',
-        'wq': 'white_queens',
-        'bq': 'black_queens',
-        'wk': 'white_kings',
-        'bk': 'black_kings',
-    }
     material_counter = boards.MaterialCounter(**{
-        args_translate[pt]: int(request.args.get(pt)) for pt in args_translate.keys()
+        ARGS_TRANSLATE[pt]: int(request.args.get(pt)) for pt in ARGS_TRANSLATE.keys()
     })
     return jsonify(api.stub_inference(fen, material_counter))
 
 @app.route('/inference')
 def inference():
     fen = request.args.get('fen')
-    args_translate = {
-        'wp': 'white_pawns',
-        'bp': 'black_pawns',
-        'wn': 'white_knights',
-        'bn': 'black_knights',
-        'wb': 'white_bishops',
-        'bb': 'black_bishops',
-        'wr': 'white_rooks',
-        'br': 'black_rooks',
-        'wq': 'white_queens',
-        'bq': 'black_queens',
-        'wk': 'white_kings',
-        'bk': 'black_kings',
-    }
     material_counter = boards.MaterialCounter(**{
-        args_translate[pt]: int(request.args.get(pt)) for pt in args_translate.keys()
+        ARGS_TRANSLATE[pt]: int(request.args.get(pt)) for pt in ARGS_TRANSLATE.keys()
     })
     return jsonify(api.inference(fen, material_counter, CONFIG, EIDOLONZERO_MODEL))
 
