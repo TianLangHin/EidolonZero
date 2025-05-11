@@ -43,17 +43,20 @@ async function step2() {
 }
 
 async function step3(foggedFen, materialCount) {
+  document.getElementById('loading').innerHTML = "THINKING..."
   const params = new URLSearchParams({ ...materialCount, fen: foggedFen })
   const response = await fetch('http://127.0.0.1:5000/inference?' + params.toString())
   const jsonResponse = await response.json();
 
   document.getElementById('ai-best-move').innerHTML = 'Best Move: ' + jsonResponse.move
+  
+  document.getElementById('win-percentage').innerHTML = 'Win Percentage: ' + jsonResponse.estimate
 
   const squares = jsonResponse.predicted_board.squares
   for (let key in squares) {
     document.getElementById(key).innerHTML = squares[key] === null ? '' : pieceMap[squares[key]]
   }
-
+  document.getElementById('loading').innerHTML = ""
   return jsonResponse.move
 }
 
