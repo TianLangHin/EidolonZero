@@ -148,6 +148,10 @@ def inference(
             position=board
         ))
 
+        # Linearly scaled estimated win percentage.
+        estimate = estimated_value / play_config.possibilities
+        win_percentage = (estimate + 1) / 2
+
         return {
             'predicted_board': {
                 'fen': predicted_board.fen(),
@@ -157,7 +161,7 @@ def inference(
                 }
             },
             'move': move.uci(),
-            'estimate': estimated_value / play_config.possibilities
+            'estimate': f'{100 * win_percentage:.4f}%'
         }
     except ValueError:
         return None
