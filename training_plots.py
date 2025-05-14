@@ -56,6 +56,7 @@ def parse_elos(filename: str) -> dict:
     elo_results = {}
     elo_line = re.compile('^\\s+[0-9]+ EidolonZero-([a-z0-9.]+)-([0-9]+)\\s+(-?[0-9]+)')
     untrained_line = re.compile('^\\s+[0-9]+ EidolonZero-untrained\\s+(-?[0-9]+)')
+    baseline_line = re.compile('^\\s+[0-9]+ Random\\s+(-?[0-9]+)')
     with open(filename, 'rt') as f:
         for line in f:
             if (matches := elo_line.match(line)) is not None:
@@ -64,6 +65,9 @@ def parse_elos(filename: str) -> dict:
             elif (untrained := untrained_line.match(line)) is not None:
                 elo = int(untrained.group(1))
                 elo_results['untrained'] = elo
+            elif (baseline := baseline_line.match(line)) is not None:
+                elo = int(baseline.group(1))
+                elo_results['baseline'] = elo 
     return elo_results
 
 def plot_vae_logs(data: dict):
@@ -104,20 +108,19 @@ def plot_elos(data: dict):
     fig = plt.figure()
     plt.title('ELO Rating of EidolonZero Settings Over Training')
     labels = []
-    for setting in data.keys():
-        if setting == 'untrained':
-            continue
+    baseline = data['baseline']
+    for setting in ['initial', 'cpuct1.0', 'dirichletalpha0.15', 'epsilon0.5']:
         performance = [(0, data['untrained'])] + data[setting]
         performance.sort(key=lambda x: x[0])
         plt.plot(
             [p[0] for p in performance],
-            [p[1] for p in performance],
+            [p[1] - baseline for p in performance],
             marker='s',
             linestyle='dashed')
         labels.append(setting)
     plt.xticks([0, 3, 6, 9, 12])
     plt.xlabel('Training step')
-    plt.ylabel('ELO')
+    plt.ylabel('ELO difference from baseline')
     plt.legend(labels)
     plt.savefig('elo-plot.png')
 
