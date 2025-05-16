@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
 import re
 
+COLOURS = ['#785ef0', '#dc267f', '#fe6100', '#ffb000']
+MARKERS = ['o', 's', 'D', '^']
+SETTINGS = ['initial', 'cpuct1.0', 'dirichletalpha0.15', 'epsilon0.5']
+
 def parse_logs(filename: str) -> dict:
 
     match_setting = re.compile('Setting: ([a-z0-9.]+)')
@@ -73,35 +77,33 @@ def parse_elos(filename: str) -> dict:
 def plot_vae_logs(data: dict):
     fig = plt.figure()
     plt.title(f'Defogger Piece Type Prediction Accuracy')
-    labels = []
-    for model_setting in data.keys():
-        pt_accuracies = [reading['pt_acc'] for reading in data[model_setting]]
+    for colour, marker, setting in zip(COLOURS, MARKERS, SETTINGS):
+        pt_accuracies = [reading['pt_acc'] for reading in data[setting]]
         plt.plot(
             range(1, len(pt_accuracies) + 1),
             pt_accuracies,
-            marker='o',
-            linestyle='dashed')
-        labels.append(model_setting)
+            marker=marker,
+            linestyle='dashed',
+            color=colour)
     plt.xticks(range(1, 13))
     plt.xlabel('Training step')
     plt.ylabel('Piece Type Accuracy')
-    plt.legend(labels)
+    plt.legend(SETTINGS)
     plt.savefig('vae-pt-accuracy.png')
     fig = plt.figure()
     plt.title(f'Defogger Piece Location IoU Prediction Accuracy')
-    labels = []
-    for model_setting in data.keys():
-        iou_accuracies = [reading['iou_acc'] for reading in data[model_setting]]
+    for colour, marker, setting in zip(COLOURS, MARKERS, SETTINGS):
+        iou_accuracies = [reading['iou_acc'] for reading in data[setting]]
         plt.plot(
             range(1, len(iou_accuracies) + 1),
             iou_accuracies,
-            marker='o',
-            linestyle='dashed')
-        labels.append(model_setting)
+            marker=marker,
+            linestyle='dashed',
+            color=colour)
     plt.xticks(range(1, 13))
     plt.xlabel('Training step')
     plt.ylabel('Piece Location IoU Accuracy')
-    plt.legend(labels)
+    plt.legend(SETTINGS)
     plt.savefig('vae-iou-accuracy.png')
 
 def plot_elos(data: dict):
@@ -109,14 +111,15 @@ def plot_elos(data: dict):
     plt.title('ELO Rating of EidolonZero Settings Over Training')
     labels = []
     baseline = data['baseline']
-    for setting in ['initial', 'cpuct1.0', 'dirichletalpha0.15', 'epsilon0.5']:
+    for colour, marker, setting in zip(COLOURS, MARKERS, SETTINGS):
         performance = [(0, data['untrained'])] + data[setting]
         performance.sort(key=lambda x: x[0])
         plt.plot(
             [p[0] for p in performance],
             [p[1] - baseline for p in performance],
-            marker='s',
-            linestyle='dashed')
+            marker=marker,
+            linestyle='dashed',
+            color=colour)
         labels.append(setting)
     plt.xticks([0, 3, 6, 9, 12])
     plt.xlabel('Training step')
