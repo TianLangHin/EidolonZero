@@ -58,20 +58,23 @@ def parse_logs(filename: str) -> dict:
 
 def parse_elos(filename: str) -> dict:
     elo_results = {}
-    elo_line = re.compile('^\\s+[0-9]+ EidolonZero-([a-z0-9.]+)-([0-9]+)\\s+(-?[0-9]+)')
-    untrained_line = re.compile('^\\s+[0-9]+ EidolonZero-untrained\\s+(-?[0-9]+)')
-    baseline_line = re.compile('^\\s+[0-9]+ Random\\s+(-?[0-9]+)')
+    elo_line = re.compile(
+        '^\\s+[0-9]+ EidolonZero-([a-z0-9.]+)-([0-9]+)\\s+(-?[0-9]+)(?:\\s+[0-9]+){3}\\s+([0-9]+)')
+    untrained_line = re.compile(
+        '^\\s+[0-9]+ EidolonZero-untrained\\s+(-?[0-9]+)(?:\\s+[0-9]+){3}\\s+([0-9]+)')
+    baseline_line = re.compile(
+        '^\\s+[0-9]+ Random\\s+(-?[0-9]+)(?:\\s+[0-9]+){3}\\s+([0-9]+)')
     with open(filename, 'rt') as f:
         for line in f:
             if (matches := elo_line.match(line)) is not None:
-                setting, step, elo = matches.groups()
-                elo_results[setting] = elo_results.get(setting, []) + [(int(step), int(elo))]
+                setting, step, elo, winrate = matches.groups()
+                elo_results[setting] = elo_results.get(setting, []) + [(int(step), int(elo), int(winrate))]
             elif (untrained := untrained_line.match(line)) is not None:
-                elo = int(untrained.group(1))
-                elo_results['untrained'] = elo
+                elo, winrate = untrained.groups()
+                elo_results['untrained'] = (int(elo), int(winrate))
             elif (baseline := baseline_line.match(line)) is not None:
-                elo = int(baseline.group(1))
-                elo_results['baseline'] = elo 
+                elo, winrate = baseline.groups()
+                elo_results['baseline'] = (int(elo), int(winrate))
     return elo_results
 
 def plot_vae_logs(data: dict):
@@ -90,6 +93,7 @@ def plot_vae_logs(data: dict):
     plt.ylabel('Piece Type Accuracy')
     plt.legend(SETTINGS)
     plt.savefig('vae-pt-accuracy.png')
+
     fig = plt.figure()
     plt.title(f'Defogger Piece Location IoU Prediction Accuracy')
     for colour, marker, setting in zip(COLOURS, MARKERS, SETTINGS):
@@ -112,11 +116,11 @@ def plot_elos(data: dict):
     labels = []
     baseline = data['baseline']
     for colour, marker, setting in zip(COLOURS, MARKERS, SETTINGS):
-        performance = [(0, data['untrained'])] + data[setting]
+        performance = [(0, *data['untrained'])] + data[setting]
         performance.sort(key=lambda x: x[0])
         plt.plot(
             [p[0] for p in performance],
-            [p[1] - baseline for p in performance],
+            [p[1] - baseline[0] for p in performance],
             marker=marker,
             linestyle='dashed',
             color=colour)
@@ -126,6 +130,25 @@ def plot_elos(data: dict):
     plt.ylabel('ELO difference from baseline')
     plt.legend(labels)
     plt.savefig('elo-plot.png')
+
+    fig = plt.figure()
+    plt.title('Overall win rate of EidolonZero Settings Over Training')
+    labels = []
+    for colour, marker, setting in zip(COLOURS, MARKERS, SETTINGS):
+        performance = [(0, *data['untrained'])] + data[setting]
+        performance.sort(key=lambda x: x[0])
+        plt.plot(
+            [p[0] for p in performance],
+            [p[2] for p in performance],
+            marker=marker,
+            linestyle='dashed',
+            color=colour)
+        labels.append(setting)
+    plt.xticks([0, 3, 6, 9, 12])
+    plt.xlabel('Training step')
+    plt.ylabel('Overall tournament win rate (%)')
+    plt.legend(labels)
+    plt.savefig('winrate-plot.png')
 
 if __name__ == '__main__':
     plot_vae_logs(parse_logs('logs.txt'))
